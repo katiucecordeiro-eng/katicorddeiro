@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* -------------------------------------------------------------------
+   Asterik — identidade visual "atlas científico vintage"
+   Fundo creme/off-white, tipografia serifada para títulos, sans-serif
+   limpa para interface, paleta com vermelho vinho, azul acinzentado
+   e dourado sutil.
+   ------------------------------------------------------------------- */
+:root {
+  --color-paper: #faf5e9;
+  --color-paper-dark: #f1e7d2;
+  --color-ink: #2a2420;
+  --color-ink-soft: #5a5044;
+  --color-wine: #6e2438;
+  --color-wine-dark: #4f1a29;
+  --color-slate: #4e6073;
+  --color-slate-dark: #38495a;
+  --color-gold: #b3924f;
+  --color-gold-soft: #ddc998;
+  --color-line: #ddd0b0;
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-paper-dark: var(--color-paper-dark);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-wine: var(--color-wine);
+  --color-wine-dark: var(--color-wine-dark);
+  --color-slate: var(--color-slate);
+  --color-slate-dark: var(--color-slate-dark);
+  --color-gold: var(--color-gold);
+  --color-gold-soft: var(--color-gold-soft);
+  --color-line: var(--color-line);
+
+  --font-serif: var(--font-atlas-serif);
+  --font-sans: var(--font-atlas-sans);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-atlas-sans);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-atlas-serif);
+}
+
+/* Borda ornamentada discreta, para elementos de destaque (cards, molduras) */
+.border-ornamental {
+  border: 1px solid var(--color-gold);
+  outline: 1px solid var(--color-line);
+  outline-offset: 3px;
+}
