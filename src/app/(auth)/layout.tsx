@@ -5,7 +5,7 @@ export default function AuthLayout({
     <div className="flex min-h-screen flex-1 items-center justify-center bg-paper px-4 py-16">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <span className="font-serif text-4xl font-semibold tracking-wide text-wine">
+          <span className="font-hand text-5xl font-semibold tracking-wide text-wine">
             Asterik
           </span>
           <p className="mt-2 text-sm tracking-wide text-ink-soft uppercase">

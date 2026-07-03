@@ -12,13 +12,15 @@ export default async function Home() {
       <p className="text-xs tracking-[0.3em] text-gold uppercase">
         Atlas de Anatomia
       </p>
-      <h1 className="mt-4 font-serif text-5xl font-semibold text-wine sm:text-6xl">
+      <h1 className="mt-4 font-hand text-6xl font-semibold text-wine sm:text-7xl">
         Asterik
       </h1>
+      <p className="mt-4 font-hand text-2xl text-ink sm:text-3xl">
+        Onde estudar anatomia vira arte
+      </p>
       <p className="mt-6 max-w-xl text-lg text-ink-soft">
-        O caderno de estudo digital de anatomia para estudantes de medicina,
-        enfermagem e áreas da saúde. Colora pranchas estilo atlas científico,
-        faça anotações, teste-se em quizzes e estude com Pomodoro integrado.
+        Cadernos ilustrados de anatomia para você imprimir, colorir e
+        memorizar. Para quem aprende desenhando — mesmo sem saber desenhar.
       </p>
       <div className="mt-10 flex gap-4">
         {user ? (

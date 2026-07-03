@@ -46,8 +46,8 @@ export function AppShell({ nome, plano, children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Sidebar — desktop */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-paper-dark/50 p-6 md:flex">
-        <Link href="/dashboard" className="mb-8 font-serif text-3xl font-semibold text-wine">
+      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-line bg-paper-dark/50 p-6 md:flex">
+        <Link href="/dashboard" className="font-hand mb-8 text-4xl font-semibold text-wine">
           Asterik
         </Link>
         <NavLinks pathname={pathname} />
@@ -59,8 +59,8 @@ export function AppShell({ nome, plano, children }: AppShellProps) {
       </aside>
 
       {/* Header — mobile */}
-      <header className="flex items-center justify-between border-b border-line bg-paper-dark/50 px-4 py-3 md:hidden">
-        <Link href="/dashboard" className="font-serif text-2xl font-semibold text-wine">
+      <header className="no-print flex items-center justify-between border-b border-line bg-paper-dark/50 px-4 py-3 md:hidden">
+        <Link href="/dashboard" className="font-hand text-3xl font-semibold text-wine">
           Asterik
         </Link>
         <button
@@ -74,7 +74,7 @@ export function AppShell({ nome, plano, children }: AppShellProps) {
       </header>
 
       {menuOpen && (
-        <div className="flex flex-col gap-4 border-b border-line bg-paper-dark/50 p-4 md:hidden">
+        <div className="no-print flex flex-col gap-4 border-b border-line bg-paper-dark/50 p-4 md:hidden">
           <NavLinks pathname={pathname} onNavigate={() => setMenuOpen(false)} />
           <div className="border-t border-line pt-4">
             <p className="truncate text-sm font-medium text-ink">{nome}</p>

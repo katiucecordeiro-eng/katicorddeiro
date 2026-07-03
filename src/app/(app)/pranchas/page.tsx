@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { HandDivider } from "@/components/notebook/HandDivider";
 
 export const metadata: Metadata = { title: "Biblioteca de Pranchas — Asterik" };
 
@@ -25,9 +27,11 @@ export default async function BibliotecaPage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-semibold text-ink">Biblioteca de Pranchas</h1>
+        <h1 className="font-hand text-4xl font-semibold text-ink">
+          Biblioteca de Pranchas
+        </h1>
         <p className="mt-1 text-ink-soft">
-          Escolha um sistema anatômico para começar a colorir e estudar.
+          Escolha um sistema anatômico para abrir o caderno e começar a estudar.
         </p>
       </div>
 
@@ -38,32 +42,40 @@ export default async function BibliotecaPage() {
       <div className="flex flex-col gap-8">
         {sistemas?.map((sistema) => (
           <section key={sistema.id}>
-            <h2 className="mb-3 font-serif text-2xl font-semibold text-wine">
+            <h2 className="font-hand text-3xl font-semibold text-wine">
               {sistema.nome}
             </h2>
+            <HandDivider className="mb-3 max-w-[10rem]" />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {sistema.pranchas?.length ? (
                 sistema.pranchas.map((prancha) => {
                   const bloqueada = !acessoTotal && !prancha.disponivel_no_white;
-                  return (
+                  const conteudo = (
                     <div
-                      key={prancha.id}
-                      className={`rounded-sm border p-4 ${
-                        bloqueada
-                          ? "border-line bg-paper-dark/10 opacity-60"
-                          : "border-line bg-paper-dark/20 hover:border-wine"
+                      className={`notebook-page rounded-sm p-4 transition-colors ${
+                        bloqueada ? "opacity-60" : "hover:border-wine"
                       }`}
                     >
                       <p className="text-xs tracking-wide text-gold uppercase">
                         {prancha.numero_prancha}
                       </p>
-                      <p className="mt-1 font-medium text-ink">{prancha.titulo}</p>
+                      <p className="font-hand-note mt-1 text-lg text-ink">
+                        {prancha.titulo}
+                      </p>
                       {bloqueada && (
                         <p className="mt-2 text-xs font-medium text-slate-dark">
                           Disponível no plano Black
                         </p>
                       )}
                     </div>
+                  );
+
+                  return bloqueada ? (
+                    <div key={prancha.id}>{conteudo}</div>
+                  ) : (
+                    <Link key={prancha.id} href={`/estudar/${prancha.id}`}>
+                      {conteudo}
+                    </Link>
                   );
                 })
               ) : (

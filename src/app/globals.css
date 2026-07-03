@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
 /* -------------------------------------------------------------------
-   Asterik — identidade visual "atlas científico vintage"
-   Fundo creme/off-white, tipografia serifada para títulos, sans-serif
-   limpa para interface, paleta com vermelho vinho, azul acinzentado
-   e dourado sutil.
+   Asterik — identidade visual "caderno de estudo ilustrado"
+   Papel creme com textura sutil de pontos, tipografia manuscrita para
+   títulos/anotações/post-its, serifada clássica para leitura longa,
+   sans-serif limpa para controles de interface. Paleta com vinho,
+   post-its pastel e marca-texto translúcido.
    ------------------------------------------------------------------- */
 :root {
-  --color-paper: #faf5e9;
+  --color-paper: #fbf8f1;
   --color-paper-dark: #f1e7d2;
-  --color-ink: #2a2420;
-  --color-ink-soft: #5a5044;
+  --color-ink: #2e2a26;
+  --color-ink-soft: #6b6156;
   --color-wine: #6e2438;
   --color-wine-dark: #4f1a29;
   --color-slate: #4e6073;
@@ -18,6 +19,15 @@
   --color-gold: #b3924f;
   --color-gold-soft: #ddc998;
   --color-line: #ddd0b0;
+
+  --color-postit-yellow: #fdf1a8;
+  --color-postit-pink: #f9d3de;
+  --color-postit-blue: #cfe6f3;
+  --color-postit-green: #d9ecd4;
+
+  --color-highlight-yellow: rgb(255 214 64 / 45%);
+  --color-highlight-pink: rgb(255 153 187 / 40%);
+  --color-highlight-green: rgb(151 221 168 / 45%);
 }
 
 @theme inline {
@@ -33,12 +43,26 @@
   --color-gold-soft: var(--color-gold-soft);
   --color-line: var(--color-line);
 
+  --color-postit-yellow: var(--color-postit-yellow);
+  --color-postit-pink: var(--color-postit-pink);
+  --color-postit-blue: var(--color-postit-blue);
+  --color-postit-green: var(--color-postit-green);
+
+  --color-highlight-yellow: var(--color-highlight-yellow);
+  --color-highlight-pink: var(--color-highlight-pink);
+  --color-highlight-green: var(--color-highlight-green);
+
   --font-serif: var(--font-atlas-serif);
   --font-sans: var(--font-atlas-sans);
+  --font-hand: var(--font-atlas-hand);
+  --font-hand-note: var(--font-atlas-hand-note);
 }
 
 body {
-  background: var(--color-paper);
+  background-color: var(--color-paper);
+  background-image: radial-gradient(var(--color-line) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-atlas-sans);
 }
@@ -47,7 +71,8 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-atlas-serif);
+  font-family: var(--font-atlas-hand);
+  font-weight: 600;
 }
 
 /* Borda ornamentada discreta, para elementos de destaque (cards, molduras) */
@@ -55,4 +80,67 @@ h4 {
   border: 1px solid var(--color-gold);
   outline: 1px solid var(--color-line);
   outline-offset: 3px;
+}
+
+/* Marca-texto: fundo translúcido imitando destaque feito à mão */
+.highlight {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 55%,
+    var(--color-highlight-yellow) 55%
+  );
+  padding: 0 0.1em;
+}
+.highlight-pink {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 55%,
+    var(--color-highlight-pink) 55%
+  );
+}
+.highlight-green {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 55%,
+    var(--color-highlight-green) 55%
+  );
+}
+
+/* Papel pautado: linhas horizontais para espaços de anotação */
+.ruled-lines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 31px,
+    var(--color-line) 31px,
+    var(--color-line) 32px
+  );
+  line-height: 32px;
+}
+
+/* Página de caderno: moldura de papel com sombra suave, para conteúdo de estudo */
+.notebook-page {
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 2px 10px rgb(46 42 38 / 8%);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background-image: none;
+  }
+  .notebook-page {
+    box-shadow: none;
+    border: none;
+  }
+  .print-page-break {
+    break-after: page;
+  }
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
 }
