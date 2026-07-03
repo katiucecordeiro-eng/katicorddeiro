@@ -223,6 +223,7 @@ export type Database = {
       };
       sistemas: {
         Row: {
+          conteudo_teorico: Json;
           criado_em: string;
           id: string;
           nome: string;
@@ -231,6 +232,7 @@ export type Database = {
           thumbnail_url: string | null;
         };
         Insert: {
+          conteudo_teorico?: Json;
           criado_em?: string;
           id?: string;
           nome: string;
@@ -239,6 +241,7 @@ export type Database = {
           thumbnail_url?: string | null;
         };
         Update: {
+          conteudo_teorico?: Json;
           criado_em?: string;
           id?: string;
           nome?: string;
