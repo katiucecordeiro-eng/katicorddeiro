@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { CapaPage } from "@/components/notebook/pages/CapaPage";
 import { TeoriaPage } from "@/components/notebook/pages/TeoriaPage";
-import { IlustracaoPage } from "@/components/notebook/pages/IlustracaoPage";
 import { AnotacoesPage } from "@/components/notebook/pages/AnotacoesPage";
+import { IlustracaoColorivel } from "@/components/coloring/IlustracaoColorivel";
 import type { ConteudoPrancha } from "@/components/notebook/theory-types";
+
+type GaleriaItem = { id: string; imagem_url: string; titulo: string };
 
 type NotebookViewerProps = {
   pranchaId: string;
@@ -17,6 +19,8 @@ type NotebookViewerProps = {
   imagemBaseUrl: string | null;
   legendaCoresJson: unknown;
   conteudoPrancha: ConteudoPrancha;
+  galeria: GaleriaItem[];
+  progressoCoresJson: unknown;
   anotacoesIniciais: string;
 };
 
@@ -57,11 +61,14 @@ export function NotebookViewer(props: NotebookViewerProps) {
         />
       )}
       {pagina === "ilustracao" && (
-        <IlustracaoPage
+        <IlustracaoColorivel
+          pranchaId={props.pranchaId}
           titulo={props.titulo}
           numeroPrancha={props.numeroPrancha}
-          imagemBaseUrl={props.imagemBaseUrl}
+          imagemPrincipalUrl={props.imagemBaseUrl}
           legendaCoresJson={props.legendaCoresJson}
+          galeria={props.galeria}
+          progressoInicialJson={props.progressoCoresJson}
         />
       )}
       {pagina === "anotacoes" && (

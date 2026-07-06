@@ -39,9 +39,15 @@ export default async function EstudarPage({ params }: PageProps) {
     .eq("id", prancha.sistema_id)
     .single();
 
+  const { data: galeria } = await supabase
+    .from("prancha_imagens")
+    .select("id, imagem_url, titulo, ordem")
+    .eq("prancha_id", prancha_id)
+    .order("ordem");
+
   const { data: progresso } = await supabase
     .from("progresso_usuario")
-    .select("anotacoes")
+    .select("anotacoes, cores_preenchidas")
     .eq("user_id", user!.id)
     .eq("prancha_id", prancha_id)
     .maybeSingle();
@@ -58,6 +64,8 @@ export default async function EstudarPage({ params }: PageProps) {
       imagemBaseUrl={prancha.imagem_base_url}
       legendaCoresJson={prancha.legenda_cores}
       conteudoPrancha={normalizarConteudoPrancha(prancha.conteudo_teorico)}
+      galeria={galeria ?? []}
+      progressoCoresJson={progresso?.cores_preenchidas ?? {}}
       anotacoesIniciais={progresso?.anotacoes ?? ""}
     />
   );
