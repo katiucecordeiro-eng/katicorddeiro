@@ -5,6 +5,7 @@ import { CapaPage } from "@/components/notebook/pages/CapaPage";
 import { TeoriaPage } from "@/components/notebook/pages/TeoriaPage";
 import { IlustracaoPage } from "@/components/notebook/pages/IlustracaoPage";
 import { AnotacoesImpressao } from "@/components/notebook/pages/AnotacoesImpressao";
+import { NotebookLines } from "@/components/notebook/NotebookLines";
 import {
   normalizarConteudoPrancha,
   normalizarConteudoSistema,
@@ -42,6 +43,12 @@ export default async function ImprimirPage({ params }: PageProps) {
     .select("nome, conteudo_teorico")
     .eq("id", prancha.sistema_id)
     .single();
+
+  const { data: galeria } = await supabase
+    .from("prancha_imagens")
+    .select("id, imagem_url, titulo, ordem")
+    .eq("prancha_id", prancha_id)
+    .order("ordem");
 
   const { data: progresso } = await supabase
     .from("progresso_usuario")
@@ -84,7 +91,26 @@ export default async function ImprimirPage({ params }: PageProps) {
           imagemBaseUrl={prancha.imagem_base_url}
           legendaCoresJson={prancha.legenda_cores}
         />
+        <div className="notebook-page mt-4 rounded-sm px-6 py-6">
+          <p className="font-hand-note mb-2 text-lg text-ink-soft">Observações</p>
+          <NotebookLines linhas={5} />
+        </div>
       </div>
+
+      {(galeria ?? []).map((imagem) => (
+        <div key={imagem.id} className="print-page-break">
+          <IlustracaoPage
+            titulo={imagem.titulo}
+            numeroPrancha={prancha.numero_prancha}
+            imagemBaseUrl={imagem.imagem_url}
+            legendaCoresJson={prancha.legenda_cores}
+          />
+          <div className="notebook-page mt-4 rounded-sm px-6 py-6">
+            <p className="font-hand-note mb-2 text-lg text-ink-soft">Observações</p>
+            <NotebookLines linhas={5} />
+          </div>
+        </div>
+      ))}
 
       <div>
         <AnotacoesImpressao anotacoes={progresso?.anotacoes ?? ""} />

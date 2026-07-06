@@ -135,9 +135,23 @@ h4 {
   .notebook-page {
     box-shadow: none;
     border: none;
+    min-height: 0;
+    break-inside: avoid;
+  }
+  /* Imagens e canvases (ilustração, ilustração colorível) nunca devem
+     ultrapassar uma página nem ser cortados — encolhem para caber,
+     mantendo a proporção, seja qual for o tamanho de papel escolhido. */
+  .notebook-page img,
+  .notebook-page canvas {
+    max-width: 100%;
+    max-height: 220mm;
+    width: auto;
+    height: auto;
+    object-fit: contain;
   }
   .print-page-break {
     break-after: page;
+    break-inside: avoid;
   }
   @page {
     size: A4;

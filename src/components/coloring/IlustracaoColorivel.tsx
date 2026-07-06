@@ -49,12 +49,21 @@ function normalizarProgresso(json: unknown): Record<string, OperacaoPreenchiment
   return resultado;
 }
 
-function imprimirImagem(src: string) {
+function imprimirImagem(src: string, titulo: string) {
   const janela = window.open("", "_blank");
   if (!janela) return;
+  // object-fit: contain + limites em vh/vw fazem a imagem caber inteira em
+  // uma página, seja qual for o tamanho de papel escolhido no diálogo de
+  // impressão (A4, Carta, etc.) — evita que o conteúdo seja cortado ou
+  // dividido em páginas extras.
   janela.document.write(
-    `<html><head><title>Imprimir</title></head><body style="margin:0">` +
-      `<img src="${src}" style="width:100%" onload="window.print()" />` +
+    `<html><head><title>${titulo}</title><style>` +
+      `@page { margin: 10mm; }` +
+      `html, body { margin: 0; padding: 0; height: 100%; }` +
+      `body { display: flex; align-items: center; justify-content: center; }` +
+      `img { max-width: 100vw; max-height: 100vh; width: auto; height: auto; object-fit: contain; }` +
+      `</style></head><body>` +
+      `<img src="${src}" onload="window.print()" />` +
       `</body></html>`
   );
   janela.document.close();
@@ -196,7 +205,7 @@ export function IlustracaoColorivel({
           </button>
           <button
             type="button"
-            onClick={() => imprimirImagem(imagemAtual.url)}
+            onClick={() => imprimirImagem(imagemAtual.url, `${titulo} — ${imagemAtual.titulo}`)}
             className="rounded-sm border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:border-wine hover:text-wine"
           >
             Imprimir em branco
@@ -205,7 +214,7 @@ export function IlustracaoColorivel({
             type="button"
             onClick={() => {
               const png = canvasRef.current?.exportarPngColorido();
-              if (png) imprimirImagem(png);
+              if (png) imprimirImagem(png, `${titulo} — ${imagemAtual.titulo} (colorida)`);
             }}
             className="rounded-sm border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:border-wine hover:text-wine"
           >
