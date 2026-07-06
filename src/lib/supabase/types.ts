@@ -15,6 +15,53 @@ export type Database = {
   };
   public: {
     Tables: {
+      cadernos: {
+        Row: {
+          capa_url: string | null;
+          criado_em: string;
+          descricao: string | null;
+          disponivel_no_white: boolean;
+          id: string;
+          numero_paginas: number | null;
+          ordem: number;
+          pdf_url: string | null;
+          sistema_id: string | null;
+          titulo: string;
+        };
+        Insert: {
+          capa_url?: string | null;
+          criado_em?: string;
+          descricao?: string | null;
+          disponivel_no_white?: boolean;
+          id?: string;
+          numero_paginas?: number | null;
+          ordem?: number;
+          pdf_url?: string | null;
+          sistema_id?: string | null;
+          titulo: string;
+        };
+        Update: {
+          capa_url?: string | null;
+          criado_em?: string;
+          descricao?: string | null;
+          disponivel_no_white?: boolean;
+          id?: string;
+          numero_paginas?: number | null;
+          ordem?: number;
+          pdf_url?: string | null;
+          sistema_id?: string | null;
+          titulo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cadernos_sistema_id_fkey";
+            columns: ["sistema_id"];
+            isOneToOne: false;
+            referencedRelation: "sistemas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pranchas: {
         Row: {
           criado_em: string;
@@ -256,6 +303,20 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      cadernos_catalogo: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          capa_url: string | null;
+          criado_em: string;
+          descricao: string | null;
+          disponivel_no_white: boolean;
+          id: string;
+          numero_paginas: number | null;
+          ordem: number;
+          sistema_id: string | null;
+          titulo: string;
+        }[];
+      };
       ranking: {
         Args: Record<PropertyKey, never>;
         Returns: {
