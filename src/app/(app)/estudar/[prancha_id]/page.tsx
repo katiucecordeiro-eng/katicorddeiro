@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NotebookViewer } from "@/components/notebook/NotebookViewer";
-import { normalizarConteudoTeorico } from "@/components/notebook/ConteudoTeorico";
+import {
+  normalizarConteudoPrancha,
+  normalizarConteudoSistema,
+} from "@/components/notebook/theory-types";
 
 type PageProps = {
   params: Promise<{ prancha_id: string }>;
@@ -20,7 +23,9 @@ export default async function EstudarPage({ params }: PageProps) {
 
   const { data: prancha } = await supabase
     .from("pranchas")
-    .select("id, sistema_id, numero_prancha, titulo, imagem_base_url, legenda_cores")
+    .select(
+      "id, sistema_id, numero_prancha, titulo, imagem_base_url, legenda_cores, conteudo_teorico"
+    )
     .eq("id", prancha_id)
     .single();
 
@@ -41,15 +46,18 @@ export default async function EstudarPage({ params }: PageProps) {
     .eq("prancha_id", prancha_id)
     .maybeSingle();
 
+  const conteudoSistema = normalizarConteudoSistema(sistema?.conteudo_teorico);
+
   return (
     <NotebookViewer
       pranchaId={prancha.id}
       sistemaNome={sistema?.nome ?? "Sistema"}
+      sistemaAbertura={conteudoSistema.abertura}
       titulo={prancha.titulo}
       numeroPrancha={prancha.numero_prancha}
       imagemBaseUrl={prancha.imagem_base_url}
       legendaCoresJson={prancha.legenda_cores}
-      blocosTeoricos={normalizarConteudoTeorico(sistema?.conteudo_teorico)}
+      conteudoPrancha={normalizarConteudoPrancha(prancha.conteudo_teorico)}
       anotacoesIniciais={progresso?.anotacoes ?? ""}
     />
   );

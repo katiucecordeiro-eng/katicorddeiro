@@ -5,7 +5,10 @@ import { CapaPage } from "@/components/notebook/pages/CapaPage";
 import { TeoriaPage } from "@/components/notebook/pages/TeoriaPage";
 import { IlustracaoPage } from "@/components/notebook/pages/IlustracaoPage";
 import { AnotacoesImpressao } from "@/components/notebook/pages/AnotacoesImpressao";
-import { normalizarConteudoTeorico } from "@/components/notebook/ConteudoTeorico";
+import {
+  normalizarConteudoPrancha,
+  normalizarConteudoSistema,
+} from "@/components/notebook/theory-types";
 import { AutoPrint } from "@/components/notebook/AutoPrint";
 
 type PageProps = {
@@ -24,7 +27,9 @@ export default async function ImprimirPage({ params }: PageProps) {
 
   const { data: prancha } = await supabase
     .from("pranchas")
-    .select("id, sistema_id, numero_prancha, titulo, imagem_base_url, legenda_cores")
+    .select(
+      "id, sistema_id, numero_prancha, titulo, imagem_base_url, legenda_cores, conteudo_teorico"
+    )
     .eq("id", prancha_id)
     .single();
 
@@ -46,6 +51,7 @@ export default async function ImprimirPage({ params }: PageProps) {
     .maybeSingle();
 
   const sistemaNome = sistema?.nome ?? "Sistema";
+  const conteudoSistema = normalizarConteudoSistema(sistema?.conteudo_teorico);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -59,13 +65,15 @@ export default async function ImprimirPage({ params }: PageProps) {
           sistemaNome={sistemaNome}
           titulo={prancha.titulo}
           numeroPrancha={prancha.numero_prancha}
+          sistemaAbertura={conteudoSistema.abertura}
         />
       </div>
 
       <div className="print-page-break">
         <TeoriaPage
-          sistemaNome={sistemaNome}
-          blocos={normalizarConteudoTeorico(sistema?.conteudo_teorico)}
+          titulo={prancha.titulo}
+          numeroPrancha={prancha.numero_prancha}
+          conteudo={normalizarConteudoPrancha(prancha.conteudo_teorico)}
         />
       </div>
 

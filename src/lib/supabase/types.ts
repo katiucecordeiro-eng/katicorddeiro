@@ -17,6 +17,7 @@ export type Database = {
     Tables: {
       pranchas: {
         Row: {
+          conteudo_teorico: Json;
           criado_em: string;
           disponivel_no_white: boolean;
           id: string;
@@ -29,6 +30,7 @@ export type Database = {
           titulo: string;
         };
         Insert: {
+          conteudo_teorico?: Json;
           criado_em?: string;
           disponivel_no_white?: boolean;
           id?: string;
@@ -41,6 +43,7 @@ export type Database = {
           titulo: string;
         };
         Update: {
+          conteudo_teorico?: Json;
           criado_em?: string;
           disponivel_no_white?: boolean;
           id?: string;

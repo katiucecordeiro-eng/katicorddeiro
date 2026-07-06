@@ -6,16 +6,17 @@ import { CapaPage } from "@/components/notebook/pages/CapaPage";
 import { TeoriaPage } from "@/components/notebook/pages/TeoriaPage";
 import { IlustracaoPage } from "@/components/notebook/pages/IlustracaoPage";
 import { AnotacoesPage } from "@/components/notebook/pages/AnotacoesPage";
-import type { BlocoTeorico } from "@/components/notebook/ConteudoTeorico";
+import type { ConteudoPrancha } from "@/components/notebook/theory-types";
 
 type NotebookViewerProps = {
   pranchaId: string;
   sistemaNome: string;
+  sistemaAbertura?: string;
   titulo: string;
   numeroPrancha: string;
   imagemBaseUrl: string | null;
   legendaCoresJson: unknown;
-  blocosTeoricos: BlocoTeorico[];
+  conteudoPrancha: ConteudoPrancha;
   anotacoesIniciais: string;
 };
 
@@ -45,10 +46,15 @@ export function NotebookViewer(props: NotebookViewerProps) {
           sistemaNome={props.sistemaNome}
           titulo={props.titulo}
           numeroPrancha={props.numeroPrancha}
+          sistemaAbertura={props.sistemaAbertura}
         />
       )}
       {pagina === "teoria" && (
-        <TeoriaPage sistemaNome={props.sistemaNome} blocos={props.blocosTeoricos} />
+        <TeoriaPage
+          titulo={props.titulo}
+          numeroPrancha={props.numeroPrancha}
+          conteudo={props.conteudoPrancha}
+        />
       )}
       {pagina === "ilustracao" && (
         <IlustracaoPage
