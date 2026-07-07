@@ -24,6 +24,9 @@ export function AnotacoesPage({ pranchaId, anotacoesIniciais }: AnotacoesPagePro
   return (
     <div className="notebook-page min-h-[70vh] rounded-sm px-6 py-8 sm:px-10 sm:py-10">
       <PageHeader rotulo="Anotações" titulo="Minhas Anotações" />
+      <p className="font-hand-note -mt-4 mb-4 text-sm text-ink-soft">
+        Escreva seu resumo desta prancha com suas próprias palavras.
+      </p>
 
       <textarea
         value={texto}
@@ -34,7 +37,7 @@ export function AnotacoesPage({ pranchaId, anotacoesIniciais }: AnotacoesPagePro
         onBlur={salvar}
         placeholder="Escreva aqui o que quiser lembrar sobre esta prancha…"
         className="ruled-lines font-hand-note w-full resize-none border-none bg-transparent text-lg text-ink outline-none"
-        style={{ minHeight: "60vh" }}
+        style={{ minHeight: "65vh" }}
       />
 
       <div className="no-print mt-4 flex items-center gap-3">

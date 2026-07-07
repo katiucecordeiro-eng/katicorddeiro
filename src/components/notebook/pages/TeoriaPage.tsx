@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/notebook/PageHeader";
 import { PostIt } from "@/components/notebook/PostIt";
 import { TipoPostIt } from "@/components/notebook/TipoPostIt";
-import { NotebookLines } from "@/components/notebook/NotebookLines";
+import { TabelaEstruturas } from "@/components/notebook/TabelaEstruturas";
 import { destacarPalavrasChave } from "@/lib/keyword-highlight";
 import type { ConteudoPrancha } from "@/components/notebook/theory-types";
 
@@ -14,6 +14,8 @@ type TeoriaPageProps = {
 export function TeoriaPage({ titulo, numeroPrancha, conteudo }: TeoriaPageProps) {
   const temConteudo = Boolean(conteudo.abertura) || conteudo.blocos.length > 0;
   const palavras = conteudo.palavras_chave;
+  const postitsClinicos = conteudo.postits.filter((item) => item.tipo === "clinico");
+  const postitsRestantes = conteudo.postits.filter((item) => item.tipo !== "clinico");
 
   return (
     <div className="notebook-page min-h-[70vh] rounded-sm px-6 py-8 sm:px-10 sm:py-10">
@@ -28,7 +30,7 @@ export function TeoriaPage({ titulo, numeroPrancha, conteudo }: TeoriaPageProps)
           )}
 
           {conteudo.blocos.map((bloco, indice) => (
-            <div key={indice}>
+            <div key={indice} className="flex flex-col gap-3">
               {bloco.subtitulo && (
                 <h3 className="font-hand mb-1 text-2xl font-semibold text-wine">
                   {bloco.subtitulo}
@@ -37,12 +39,30 @@ export function TeoriaPage({ titulo, numeroPrancha, conteudo }: TeoriaPageProps)
               <p className="font-serif text-lg leading-relaxed text-ink">
                 {destacarPalavrasChave(bloco.texto, palavras)}
               </p>
+
+              {bloco.tabela && <TabelaEstruturas tabela={bloco.tabela} />}
+
+              {bloco.instrucoes && bloco.instrucoes.length > 0 && (
+                <ol className="font-serif list-decimal space-y-1 pl-5 text-ink">
+                  {bloco.instrucoes.map((passo, i) => (
+                    <li key={i}>{passo}</li>
+                  ))}
+                </ol>
+              )}
             </div>
           ))}
 
-          {conteudo.postits.length > 0 && (
+          {postitsClinicos.length > 0 && (
+            <div className="flex flex-col gap-3 pt-2">
+              {postitsClinicos.map((item, indice) => (
+                <TipoPostIt key={indice} item={item} />
+              ))}
+            </div>
+          )}
+
+          {postitsRestantes.length > 0 && (
             <div className="flex flex-wrap gap-4 pt-2">
-              {conteudo.postits.map((item, indice) => (
+              {postitsRestantes.map((item, indice) => (
                 <TipoPostIt key={indice} item={item} />
               ))}
             </div>
@@ -50,17 +70,10 @@ export function TeoriaPage({ titulo, numeroPrancha, conteudo }: TeoriaPageProps)
         </div>
       ) : (
         <PostIt cor="rosa">
-          Conteúdo teórico chegando em breve — por enquanto, use o espaço
-          abaixo para escrever suas próprias anotações de estudo.
+          Conteúdo teórico chegando em breve — por enquanto, use as páginas de
+          anotação para registrar o que já sabe sobre esta prancha.
         </PostIt>
       )}
-
-      <div className="mt-8">
-        <p className="font-hand-note mb-2 text-lg text-ink-soft">
-          Suas anotações nesta página
-        </p>
-        <NotebookLines linhas={6} />
-      </div>
     </div>
   );
 }

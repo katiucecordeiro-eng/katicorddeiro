@@ -62,6 +62,41 @@ export type Database = {
           },
         ];
       };
+      prancha_imagens: {
+        Row: {
+          criado_em: string;
+          id: string;
+          imagem_url: string;
+          ordem: number;
+          prancha_id: string;
+          titulo: string;
+        };
+        Insert: {
+          criado_em?: string;
+          id?: string;
+          imagem_url: string;
+          ordem?: number;
+          prancha_id: string;
+          titulo: string;
+        };
+        Update: {
+          criado_em?: string;
+          id?: string;
+          imagem_url?: string;
+          ordem?: number;
+          prancha_id?: string;
+          titulo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "prancha_imagens_prancha_id_fkey";
+            columns: ["prancha_id"];
+            isOneToOne: false;
+            referencedRelation: "pranchas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pranchas: {
         Row: {
           conteudo_teorico: Json;
@@ -144,7 +179,6 @@ export type Database = {
           anotacoes: string | null;
           atualizado_em: string;
           completo: boolean;
-          cores_preenchidas: Json;
           id: string;
           prancha_id: string;
           user_id: string;
@@ -153,7 +187,6 @@ export type Database = {
           anotacoes?: string | null;
           atualizado_em?: string;
           completo?: boolean;
-          cores_preenchidas?: Json;
           id?: string;
           prancha_id: string;
           user_id: string;
@@ -162,7 +195,6 @@ export type Database = {
           anotacoes?: string | null;
           atualizado_em?: string;
           completo?: boolean;
-          cores_preenchidas?: Json;
           id?: string;
           prancha_id?: string;
           user_id?: string;

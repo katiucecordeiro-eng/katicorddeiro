@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { CapaPage } from "@/components/notebook/pages/CapaPage";
 import { TeoriaPage } from "@/components/notebook/pages/TeoriaPage";
-import { IlustracaoPage } from "@/components/notebook/pages/IlustracaoPage";
 import { AnotacoesPage } from "@/components/notebook/pages/AnotacoesPage";
+import { PranchasVisualizacao } from "@/components/notebook/pages/PranchasVisualizacao";
 import type { ConteudoPrancha } from "@/components/notebook/theory-types";
+
+type GaleriaItem = { id: string; imagem_url: string; titulo: string };
 
 type NotebookViewerProps = {
   pranchaId: string;
@@ -15,19 +17,20 @@ type NotebookViewerProps = {
   titulo: string;
   numeroPrancha: string;
   imagemBaseUrl: string | null;
-  legendaCoresJson: unknown;
   conteudoPrancha: ConteudoPrancha;
+  galeria: GaleriaItem[];
   anotacoesIniciais: string;
 };
 
-const PAGINAS = ["capa", "teoria", "ilustracao", "anotacoes"] as const;
+const PAGINAS = ["capa", "teoria", "anotacoes", "pranchas"] as const;
 
 export function NotebookViewer(props: NotebookViewerProps) {
   const [indice, setIndice] = useState(0);
   const pagina = PAGINAS[indice];
+  const largura = pagina === "pranchas" ? "max-w-6xl" : "max-w-3xl";
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+    <div className={`mx-auto flex ${largura} flex-col gap-4`}>
       <div className="no-print flex items-center justify-between text-sm text-ink-soft">
         <Link href="/pranchas" className="hover:text-wine">
           ← Voltar à biblioteca
@@ -56,18 +59,18 @@ export function NotebookViewer(props: NotebookViewerProps) {
           conteudo={props.conteudoPrancha}
         />
       )}
-      {pagina === "ilustracao" && (
-        <IlustracaoPage
-          titulo={props.titulo}
-          numeroPrancha={props.numeroPrancha}
-          imagemBaseUrl={props.imagemBaseUrl}
-          legendaCoresJson={props.legendaCoresJson}
-        />
-      )}
       {pagina === "anotacoes" && (
         <AnotacoesPage
           pranchaId={props.pranchaId}
           anotacoesIniciais={props.anotacoesIniciais}
+        />
+      )}
+      {pagina === "pranchas" && (
+        <PranchasVisualizacao
+          titulo={props.titulo}
+          numeroPrancha={props.numeroPrancha}
+          imagemPrincipalUrl={props.imagemBaseUrl}
+          galeria={props.galeria}
         />
       )}
 

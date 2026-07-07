@@ -37,14 +37,11 @@ export function IlustracaoPage({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={imagemBaseUrl}
-          alt={`Ilustração para colorir: ${titulo}`}
+          alt={`Ilustração para colorir no papel: ${titulo}`}
           className="mx-auto max-h-[55vh] w-auto"
         />
       ) : (
-        <PostIt cor="azul">
-          A ilustração desta prancha ainda não foi adicionada. A mecânica de
-          colorir chega no próximo bloco de desenvolvimento.
-        </PostIt>
+        <PostIt cor="azul">A ilustração desta prancha ainda não foi adicionada.</PostIt>
       )}
 
       {legenda.length > 0 && (

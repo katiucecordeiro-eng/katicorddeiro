@@ -1,7 +1,14 @@
 export type TipoPostIt = "info" | "clinico" | "curiosidade";
 
 export type PostItItem = { tipo: TipoPostIt; texto: string };
-export type BlocoConteudo = { subtitulo: string; texto: string };
+export type LinhaTabela = { componente: string; caracteristica: string };
+export type TabelaConteudo = { titulo?: string; linhas: LinhaTabela[] };
+export type BlocoConteudo = {
+  subtitulo: string;
+  texto: string;
+  tabela?: TabelaConteudo;
+  instrucoes?: string[];
+};
 
 export type ConteudoPrancha = {
   abertura?: string;
@@ -30,6 +37,29 @@ function normalizarPostIt(valor: unknown): PostItItem | null {
   };
 }
 
+function normalizarLinhaTabela(valor: unknown): LinhaTabela | null {
+  if (typeof valor !== "object" || valor === null) return null;
+  const objeto = valor as Record<string, unknown>;
+  if (typeof objeto.componente !== "string" || typeof objeto.caracteristica !== "string") {
+    return null;
+  }
+  return { componente: objeto.componente, caracteristica: objeto.caracteristica };
+}
+
+function normalizarTabela(valor: unknown): TabelaConteudo | undefined {
+  if (typeof valor !== "object" || valor === null) return undefined;
+  const objeto = valor as Record<string, unknown>;
+  if (!Array.isArray(objeto.linhas)) return undefined;
+  const linhas = objeto.linhas
+    .map(normalizarLinhaTabela)
+    .filter((l): l is LinhaTabela => l !== null);
+  if (linhas.length === 0) return undefined;
+  return {
+    titulo: typeof objeto.titulo === "string" ? objeto.titulo : undefined,
+    linhas,
+  };
+}
+
 function normalizarBloco(valor: unknown): BlocoConteudo | null {
   if (typeof valor !== "object" || valor === null) return null;
   const objeto = valor as Record<string, unknown>;
@@ -37,6 +67,10 @@ function normalizarBloco(valor: unknown): BlocoConteudo | null {
   return {
     subtitulo: typeof objeto.subtitulo === "string" ? objeto.subtitulo : "",
     texto: objeto.texto,
+    tabela: normalizarTabela(objeto.tabela),
+    instrucoes: Array.isArray(objeto.instrucoes)
+      ? objeto.instrucoes.filter((i): i is string => typeof i === "string")
+      : undefined,
   };
 }
 
