@@ -62,6 +62,76 @@ export type Database = {
           },
         ];
       };
+      flashcard_progresso: {
+        Row: {
+          atualizado_em: string;
+          caixa: number;
+          flashcard_id: string;
+          id: string;
+          proxima_revisao: string;
+          user_id: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          caixa?: number;
+          flashcard_id: string;
+          id?: string;
+          proxima_revisao?: string;
+          user_id: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          caixa?: number;
+          flashcard_id?: string;
+          id?: string;
+          proxima_revisao?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_progresso_flashcard_id_fkey";
+            columns: ["flashcard_id"];
+            isOneToOne: false;
+            referencedRelation: "flashcards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      flashcards: {
+        Row: {
+          criado_em: string;
+          frente: string;
+          id: string;
+          imagem_url: string | null;
+          prancha_id: string;
+          verso: string;
+        };
+        Insert: {
+          criado_em?: string;
+          frente: string;
+          id?: string;
+          imagem_url?: string | null;
+          prancha_id: string;
+          verso: string;
+        };
+        Update: {
+          criado_em?: string;
+          frente?: string;
+          id?: string;
+          imagem_url?: string | null;
+          prancha_id?: string;
+          verso?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_prancha_id_fkey";
+            columns: ["prancha_id"];
+            isOneToOne: false;
+            referencedRelation: "pranchas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pranchas: {
         Row: {
           conteudo_teorico: Json;
@@ -181,26 +251,35 @@ export type Database = {
         Row: {
           alternativas: Json;
           criado_em: string;
+          dificuldade: Database["public"]["Enums"]["dificuldade_quiz"];
+          explicacao: string | null;
           id: string;
           pergunta: string;
           prancha_id: string;
           resposta_correta: string;
+          tipo: Database["public"]["Enums"]["tipo_quiz"];
         };
         Insert: {
           alternativas: Json;
           criado_em?: string;
+          dificuldade?: Database["public"]["Enums"]["dificuldade_quiz"];
+          explicacao?: string | null;
           id?: string;
           pergunta: string;
           prancha_id: string;
           resposta_correta: string;
+          tipo?: Database["public"]["Enums"]["tipo_quiz"];
         };
         Update: {
           alternativas?: Json;
           criado_em?: string;
+          dificuldade?: Database["public"]["Enums"]["dificuldade_quiz"];
+          explicacao?: string | null;
           id?: string;
           pergunta?: string;
           prancha_id?: string;
           resposta_correta?: string;
+          tipo?: Database["public"]["Enums"]["tipo_quiz"];
         };
         Relationships: [
           {
@@ -216,6 +295,7 @@ export type Database = {
         Row: {
           acertou: boolean;
           id: string;
+          peso_repeticao: number;
           pergunta_id: string;
           respondido_em: string;
           user_id: string;
@@ -223,6 +303,7 @@ export type Database = {
         Insert: {
           acertou: boolean;
           id?: string;
+          peso_repeticao?: number;
           pergunta_id: string;
           respondido_em?: string;
           user_id: string;
@@ -230,6 +311,7 @@ export type Database = {
         Update: {
           acertou?: boolean;
           id?: string;
+          peso_repeticao?: number;
           pergunta_id?: string;
           respondido_em?: string;
           user_id?: string;
@@ -321,7 +403,9 @@ export type Database = {
         }[];
       };
       ranking: {
-        Args: Record<PropertyKey, never>;
+        Args: {
+          filtro_sistema_slug?: string;
+        };
         Returns: {
           nome: string;
           pontos_totais: number;
@@ -331,7 +415,9 @@ export type Database = {
       };
     };
     Enums: {
+      dificuldade_quiz: "facil" | "medio" | "dificil";
       plano_usuario: "white" | "black";
+      tipo_quiz: "multipla_escolha" | "apontar_imagem";
       tipo_sessao_pomodoro: "foco" | "descanso";
     };
     CompositeTypes: {
