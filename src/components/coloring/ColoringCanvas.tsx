@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
 import { calcularMascaraPreenchimento, pintarMascara, type OperacaoPreenchimento } from "@/lib/flood-fill";
 
-const LARGURA_MAXIMA = 900;
+const LARGURA_MAXIMA = 1600;
+const LIMIAR_ARRASTO = 6;
 
 export type ColoringCanvasHandle = {
   exportarPngColorido: () => string | null;
@@ -14,13 +15,18 @@ type ColoringCanvasProps = {
   corAtual: string;
   operacoes: OperacaoPreenchimento[];
   onNovaOperacao: (operacao: OperacaoPreenchimento) => void;
+  onDimensoesNaturais?: (largura: number, altura: number) => void;
 };
 
 export const ColoringCanvas = forwardRef<ColoringCanvasHandle, ColoringCanvasProps>(
-  function ColoringCanvas({ imagemUrl, corAtual, operacoes, onNovaOperacao }, ref) {
+  function ColoringCanvas(
+    { imagemUrl, corAtual, operacoes, onNovaOperacao, onDimensoesNaturais },
+    ref
+  ) {
     const baseCanvasRef = useRef<HTMLCanvasElement>(null);
     const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
     const baseImageDataRef = useRef<ImageData | null>(null);
+    const pointerInicioRef = useRef<{ x: number; y: number } | null>(null);
     const [dimensoes, setDimensoes] = useState<{ width: number; height: number } | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState<string | null>(null);
@@ -84,6 +90,7 @@ export const ColoringCanvas = forwardRef<ColoringCanvasHandle, ColoringCanvasPro
         }
 
         setDimensoes({ width: largura, height: altura });
+        onDimensoesNaturais?.(imagem.width, imagem.height);
         setCarregando(false);
       };
 
@@ -98,6 +105,7 @@ export const ColoringCanvas = forwardRef<ColoringCanvasHandle, ColoringCanvasPro
       return () => {
         cancelado = true;
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [imagemUrl]);
 
     useEffect(() => {
@@ -136,27 +144,31 @@ export const ColoringCanvas = forwardRef<ColoringCanvasHandle, ColoringCanvasPro
       };
     }
 
-    function aoClicar(evento: React.MouseEvent<HTMLCanvasElement>) {
+    // Usa pointer events com limiar de arrasto (em vez de click/touchstart)
+    // para funcionar corretamente dentro do viewport com zoom/pan: um toque
+    // que se transforma em arrasto para navegar pela imagem não deve pintar.
+    function aoPointerDown(evento: React.PointerEvent<HTMLCanvasElement>) {
+      pointerInicioRef.current = { x: evento.clientX, y: evento.clientY };
+    }
+
+    function aoPointerUp(evento: React.PointerEvent<HTMLCanvasElement>) {
+      const inicio = pointerInicioRef.current;
+      pointerInicioRef.current = null;
+      if (!inicio) return;
+      const moveu = Math.hypot(evento.clientX - inicio.x, evento.clientY - inicio.y) > LIMIAR_ARRASTO;
+      if (moveu) return;
       const ponto = coordenadasDoEvento(evento.clientX, evento.clientY);
       if (ponto) onNovaOperacao({ ...ponto, cor: corAtual });
     }
 
-    function aoTocar(evento: React.TouchEvent<HTMLCanvasElement>) {
-      evento.preventDefault();
-      const toque = evento.touches[0] ?? evento.changedTouches[0];
-      if (!toque) return;
-      const ponto = coordenadasDoEvento(toque.clientX, toque.clientY);
-      if (ponto) onNovaOperacao({ ...ponto, cor: corAtual });
-    }
-
     return (
-      <div className="relative mx-auto w-full max-w-xl touch-none select-none">
-        <canvas ref={baseCanvasRef} className="w-full rounded-sm border border-line" />
+      <div className="relative h-full w-full touch-none select-none">
+        <canvas ref={baseCanvasRef} className="absolute inset-0 h-full w-full rounded-sm" />
         <canvas
           ref={overlayCanvasRef}
-          className="absolute inset-0 w-full cursor-crosshair"
-          onClick={aoClicar}
-          onTouchStart={aoTocar}
+          className="absolute inset-0 h-full w-full cursor-crosshair"
+          onPointerDown={aoPointerDown}
+          onPointerUp={aoPointerUp}
         />
         {carregando && (
           <div className="absolute inset-0 flex items-center justify-center bg-paper/70">

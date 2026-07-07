@@ -97,6 +97,54 @@ export type Database = {
           },
         ];
       };
+      prancha_rotulos: {
+        Row: {
+          criado_em: string;
+          id: string;
+          ordem: number;
+          pos_x: number;
+          pos_y: number;
+          prancha_id: string;
+          prancha_imagem_id: string | null;
+          texto: string;
+        };
+        Insert: {
+          criado_em?: string;
+          id?: string;
+          ordem?: number;
+          pos_x: number;
+          pos_y: number;
+          prancha_id: string;
+          prancha_imagem_id?: string | null;
+          texto: string;
+        };
+        Update: {
+          criado_em?: string;
+          id?: string;
+          ordem?: number;
+          pos_x?: number;
+          pos_y?: number;
+          prancha_id?: string;
+          prancha_imagem_id?: string | null;
+          texto?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "prancha_rotulos_prancha_id_fkey";
+            columns: ["prancha_id"];
+            isOneToOne: false;
+            referencedRelation: "pranchas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prancha_rotulos_prancha_imagem_id_fkey";
+            columns: ["prancha_imagem_id"];
+            isOneToOne: false;
+            referencedRelation: "prancha_imagens";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pranchas: {
         Row: {
           conteudo_teorico: Json;

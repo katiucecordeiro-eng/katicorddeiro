@@ -9,6 +9,14 @@ import { IlustracaoColorivel } from "@/components/coloring/IlustracaoColorivel";
 import type { ConteudoPrancha } from "@/components/notebook/theory-types";
 
 type GaleriaItem = { id: string; imagem_url: string; titulo: string };
+type RotuloItem = {
+  id: string;
+  prancha_imagem_id: string | null;
+  texto: string;
+  pos_x: number;
+  pos_y: number;
+  ordem: number;
+};
 
 type NotebookViewerProps = {
   pranchaId: string;
@@ -20,6 +28,7 @@ type NotebookViewerProps = {
   legendaCoresJson: unknown;
   conteudoPrancha: ConteudoPrancha;
   galeria: GaleriaItem[];
+  rotulos: RotuloItem[];
   progressoCoresJson: unknown;
   anotacoesIniciais: string;
 };
@@ -29,9 +38,10 @@ const PAGINAS = ["capa", "teoria", "ilustracao", "anotacoes"] as const;
 export function NotebookViewer(props: NotebookViewerProps) {
   const [indice, setIndice] = useState(0);
   const pagina = PAGINAS[indice];
+  const largura = pagina === "ilustracao" ? "max-w-6xl" : "max-w-3xl";
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+    <div className={`mx-auto flex ${largura} flex-col gap-4`}>
       <div className="no-print flex items-center justify-between text-sm text-ink-soft">
         <Link href="/pranchas" className="hover:text-wine">
           ← Voltar à biblioteca
@@ -68,6 +78,7 @@ export function NotebookViewer(props: NotebookViewerProps) {
           imagemPrincipalUrl={props.imagemBaseUrl}
           legendaCoresJson={props.legendaCoresJson}
           galeria={props.galeria}
+          rotulos={props.rotulos}
           progressoInicialJson={props.progressoCoresJson}
         />
       )}

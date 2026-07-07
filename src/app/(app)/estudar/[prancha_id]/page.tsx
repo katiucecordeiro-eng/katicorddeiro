@@ -45,6 +45,12 @@ export default async function EstudarPage({ params }: PageProps) {
     .eq("prancha_id", prancha_id)
     .order("ordem");
 
+  const { data: rotulos } = await supabase
+    .from("prancha_rotulos")
+    .select("id, prancha_imagem_id, texto, pos_x, pos_y, ordem")
+    .eq("prancha_id", prancha_id)
+    .order("ordem");
+
   const { data: progresso } = await supabase
     .from("progresso_usuario")
     .select("anotacoes, cores_preenchidas")
@@ -65,6 +71,7 @@ export default async function EstudarPage({ params }: PageProps) {
       legendaCoresJson={prancha.legenda_cores}
       conteudoPrancha={normalizarConteudoPrancha(prancha.conteudo_teorico)}
       galeria={galeria ?? []}
+      rotulos={rotulos ?? []}
       progressoCoresJson={progresso?.cores_preenchidas ?? {}}
       anotacoesIniciais={progresso?.anotacoes ?? ""}
     />
