@@ -99,27 +99,39 @@ export type Database = {
       };
       flashcards: {
         Row: {
+          alternativas: Json | null;
           criado_em: string;
           frente: string;
           id: string;
           imagem_url: string | null;
+          marcador_x: number | null;
+          marcador_y: number | null;
           prancha_id: string;
+          resposta_correta: string | null;
           verso: string;
         };
         Insert: {
+          alternativas?: Json | null;
           criado_em?: string;
           frente: string;
           id?: string;
           imagem_url?: string | null;
+          marcador_x?: number | null;
+          marcador_y?: number | null;
           prancha_id: string;
+          resposta_correta?: string | null;
           verso: string;
         };
         Update: {
+          alternativas?: Json | null;
           criado_em?: string;
           frente?: string;
           id?: string;
           imagem_url?: string | null;
+          marcador_x?: number | null;
+          marcador_y?: number | null;
           prancha_id?: string;
+          resposta_correta?: string | null;
           verso?: string;
         };
         Relationships: [
