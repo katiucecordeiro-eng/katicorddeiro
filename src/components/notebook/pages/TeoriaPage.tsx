@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/notebook/PageHeader";
 import { PostIt } from "@/components/notebook/PostIt";
 import { TipoPostIt } from "@/components/notebook/TipoPostIt";
 import { TabelaEstruturas } from "@/components/notebook/TabelaEstruturas";
+import { PontoClinico } from "@/components/notebook/PontoClinico";
 import { destacarPalavrasChave } from "@/lib/keyword-highlight";
 import type { ConteudoPrancha } from "@/components/notebook/theory-types";
 
@@ -12,10 +13,9 @@ type TeoriaPageProps = {
 };
 
 export function TeoriaPage({ titulo, numeroPrancha, conteudo }: TeoriaPageProps) {
-  const temConteudo = Boolean(conteudo.abertura) || conteudo.blocos.length > 0;
+  const temConteudo =
+    Boolean(conteudo.abertura) || conteudo.blocos.length > 0 || conteudo.tabelas.length > 0;
   const palavras = conteudo.palavras_chave;
-  const postitsClinicos = conteudo.postits.filter((item) => item.tipo === "clinico");
-  const postitsRestantes = conteudo.postits.filter((item) => item.tipo !== "clinico");
 
   return (
     <div className="notebook-page min-h-[70vh] rounded-sm px-6 py-8 sm:px-10 sm:py-10">
@@ -39,30 +39,33 @@ export function TeoriaPage({ titulo, numeroPrancha, conteudo }: TeoriaPageProps)
               <p className="font-serif text-lg leading-relaxed text-ink">
                 {destacarPalavrasChave(bloco.texto, palavras)}
               </p>
-
-              {bloco.tabela && <TabelaEstruturas tabela={bloco.tabela} />}
-
-              {bloco.instrucoes && bloco.instrucoes.length > 0 && (
-                <ol className="font-serif list-decimal space-y-1 pl-5 text-ink">
-                  {bloco.instrucoes.map((passo, i) => (
-                    <li key={i}>{passo}</li>
-                  ))}
-                </ol>
-              )}
             </div>
           ))}
 
-          {postitsClinicos.length > 0 && (
+          {conteudo.tabelas.map((tabela, indice) => (
+            <TabelaEstruturas key={indice} tabela={tabela} />
+          ))}
+
+          {conteudo.instrucao_estudo && (
+            <div className="rounded-sm border-l-4 border-gold bg-postit-yellow/30 px-4 py-3">
+              <span className="mb-1 block text-xs font-semibold tracking-wide text-gold uppercase">
+                ✏️ Instrução de estudo
+              </span>
+              <p className="text-ink">{conteudo.instrucao_estudo}</p>
+            </div>
+          )}
+
+          {conteudo.pontos_clinicos.length > 0 && (
             <div className="flex flex-col gap-3 pt-2">
-              {postitsClinicos.map((item, indice) => (
-                <TipoPostIt key={indice} item={item} />
+              {conteudo.pontos_clinicos.map((texto, indice) => (
+                <PontoClinico key={indice} texto={texto} />
               ))}
             </div>
           )}
 
-          {postitsRestantes.length > 0 && (
+          {conteudo.postits.length > 0 && (
             <div className="flex flex-wrap gap-4 pt-2">
-              {postitsRestantes.map((item, indice) => (
+              {conteudo.postits.map((item, indice) => (
                 <TipoPostIt key={indice} item={item} />
               ))}
             </div>

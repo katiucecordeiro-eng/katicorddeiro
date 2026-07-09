@@ -6,21 +6,30 @@ export function TabelaEstruturas({ tabela }: { tabela: TabelaConteudo }) {
       {tabela.titulo && (
         <p className="font-hand-note mb-2 text-lg text-ink-soft">{tabela.titulo}</p>
       )}
-      <div className="overflow-hidden rounded-sm border border-line">
+      <div className="overflow-x-auto rounded-sm border border-line">
         <table className="w-full text-left text-sm">
           <thead className="bg-paper-dark/60 text-ink-soft uppercase">
             <tr>
-              <th className="px-3 py-2">Componente</th>
-              <th className="px-3 py-2">Característica</th>
+              {tabela.colunas.map((coluna, indice) => (
+                <th key={indice} className="px-3 py-2 whitespace-nowrap">
+                  {coluna}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {tabela.linhas.map((linha, indice) => (
-              <tr key={indice} className="border-t border-line">
-                <td className="px-3 py-2 align-top font-medium text-ink">
-                  {linha.componente}
-                </td>
-                <td className="px-3 py-2 align-top text-ink-soft">{linha.caracteristica}</td>
+            {tabela.linhas.map((linha, indiceLinha) => (
+              <tr key={indiceLinha} className="border-t border-line">
+                {linha.map((celula, indiceCelula) => (
+                  <td
+                    key={indiceCelula}
+                    className={`px-3 py-2 align-top ${
+                      indiceCelula === 0 ? "font-medium text-ink" : "text-ink-soft"
+                    }`}
+                  >
+                    {celula}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
