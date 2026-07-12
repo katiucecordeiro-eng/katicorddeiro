@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   revisarFlashcard,
   responderFlashcardAtivo,
@@ -23,7 +23,20 @@ export type CartaoDevido = {
   modoAtivo: boolean;
 };
 
-type FeedbackAtivo = { acertou: boolean; respostaCorreta: string; verso: string };
+type FeedbackAtivo = { acertou: boolean; respostaCorreta: string; verso: string; comentario: string };
+
+const FRASES_ACERTO = ["Mandou bem!", "Isso aí!", "Show de bola!", "Na mosca!", "Você manda!"];
+const FRASES_ERRO = [
+  "Quase lá — vale revisar essa.",
+  "Essa é pegadinha, revise com calma.",
+  "Não desanime, anota essa pra rever.",
+  "Acontece — bora fixar essa estrutura.",
+];
+
+function frasePara(acertou: boolean): string {
+  const lista = acertou ? FRASES_ACERTO : FRASES_ERRO;
+  return lista[Math.floor(Math.random() * lista.length)];
+}
 
 function embaralhar<T>(lista: T[]): T[] {
   const copia = [...lista];
@@ -64,6 +77,16 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
     [cartao]
   );
 
+  // Rastreia o id do cartão atualmente exibido, para descartar respostas
+  // do servidor que cheguem atrasadas depois que o usuário já avançou.
+  const cartaoIdRef = useRef<string | undefined>(cartao?.id);
+  useEffect(() => {
+    cartaoIdRef.current = cartao?.id;
+  }, [cartao?.id]);
+
+  // Trava síncrona (fora do ciclo de render) contra duplo toque/duplo clique.
+  const respondendoRef = useRef(false);
+
   function avancar() {
     setVirado(false);
     setRespostaTexto("");
@@ -73,13 +96,16 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
   }
 
   function classificar(classificacao: Classificacao) {
-    if (!cartao || pendente) return;
+    if (!cartao || pendente || respondendoRef.current) return;
+    respondendoRef.current = true;
+    const frenteRespondida = cartao.frente;
     iniciarTransicao(async () => {
       const resultado = await revisarFlashcard(cartao.id, cartao.caixaAtual, classificacao);
+      respondendoRef.current = false;
       setXpAcumulado((xp) => xp + (resultado.xpGanho ?? 0));
       if (classificacao === "errei") {
         setErros((e) => e + 1);
-        setEstruturasErradas((atual) => [...atual, cartao.frente]);
+        setEstruturasErradas((atual) => [...atual, frenteRespondida]);
       } else {
         setAcertos((a) => a + 1);
       }
@@ -88,34 +114,61 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
   }
 
   function responderAtivo(resposta: string) {
-    if (!cartao || pendente || selecionada || feedbackAtivo || !resposta.trim()) return;
+    if (!cartao || pendente || respondendoRef.current || selecionada || feedbackAtivo || !resposta.trim())
+      return;
+    respondendoRef.current = true;
+    const idRespondido = cartao.id;
+    const frenteRespondida = cartao.frente;
+    const versoRespondido = cartao.verso;
     setSelecionada(resposta);
     iniciarTransicao(async () => {
       const resultado = await responderFlashcardAtivo(cartao.id, cartao.caixaAtual, resposta);
+      respondendoRef.current = false;
       if (resultado.error || resultado.acertou === undefined) return;
-      setFeedbackAtivo({
-        acertou: resultado.acertou,
-        respostaCorreta: resultado.respostaCorreta ?? "",
-        verso: resultado.verso ?? cartao.verso,
-      });
+
       setXpAcumulado((xp) => xp + (resultado.xpGanho ?? 0));
       if (resultado.acertou) {
         setAcertos((a) => a + 1);
       } else {
         setErros((e) => e + 1);
-        setEstruturasErradas((atual) => [...atual, cartao.frente]);
+        setEstruturasErradas((atual) => [...atual, frenteRespondida]);
       }
+
+      // Se o usuário já avançou de cartão enquanto esperava a resposta,
+      // não mostra o feedback — ele não corresponde mais ao que está na tela.
+      if (cartaoIdRef.current !== idRespondido) return;
+
+      setFeedbackAtivo({
+        acertou: resultado.acertou,
+        respostaCorreta: resultado.respostaCorreta ?? "",
+        verso: resultado.verso ?? versoRespondido,
+        comentario: frasePara(resultado.acertou),
+      });
     });
   }
 
   if (concluido) {
+    const percentual = revisados > 0 ? Math.round((acertos / revisados) * 100) : 0;
+    const comentarioFinal =
+      revisados === 0
+        ? ""
+        : percentual >= 90
+          ? "Desempenho excelente — você domina essa prancha!"
+          : percentual >= 70
+            ? "Muito bom! Só falta afinar alguns detalhes."
+            : percentual >= 50
+              ? "Bom começo — revise os pontos abaixo e tente de novo."
+              : "Vale revisar com calma a teoria antes da próxima rodada.";
     return (
-      <div className="border-ornamental rounded-sm bg-paper-dark/40 p-8 text-center">
+      <div className="feedback-pop border-ornamental rounded-sm bg-paper-dark/40 p-8 text-center">
         <p className="font-hand text-3xl text-wine">Revisão concluída!</p>
         <p className="mt-2 text-ink-soft">
           Você revisou {revisados} {revisados === 1 ? "cartão" : "cartões"} — {acertos} acertos,{" "}
-          {erros} {erros === 1 ? "erro" : "erros"} — e ganhou {xpAcumulado} XP.
+          {erros} {erros === 1 ? "erro" : "erros"} ({percentual}%) — e ganhou {xpAcumulado} XP.
         </p>
+        {comentarioFinal && (
+          <p className="font-hand-note mt-2 text-lg text-wine">{comentarioFinal}</p>
+        )}
         {estruturasErradas.length > 0 && (
           <div className="mx-auto mt-4 max-w-sm text-left">
             <p className="font-hand-note mb-1 text-ink-soft">
@@ -134,9 +187,17 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <p className="font-hand-note text-sm text-ink-soft">
-        Cartão {indice + 1} de {cartoes.length} — {cartao.pranchaTitulo}
-      </p>
+      <div className="flex flex-col items-center gap-1">
+        <p className="font-hand-note text-sm text-ink-soft">
+          Cartão {indice + 1} de {cartoes.length} — {cartao.pranchaTitulo}
+        </p>
+        {revisados > 0 && (
+          <p className="text-xs text-ink-soft">
+            <span className="text-slate">✓ {acertos}</span> ·{" "}
+            <span className="text-wine">✗ {erros}</span> · {xpAcumulado} XP
+          </p>
+        )}
+      </div>
 
       {cartao.modoAtivo ? (
         <div className="notebook-page flex w-full max-w-xl flex-col items-center gap-4 rounded-sm px-5 py-6 text-center sm:px-8 sm:py-8">
@@ -218,14 +279,15 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
 
           {feedbackAtivo && (
             <div
-              className={`w-full rounded-sm border p-4 text-left ${
+              className={`feedback-pop w-full rounded-sm border p-4 text-left ${
                 feedbackAtivo.acertou
                   ? "border-slate bg-postit-green/30"
                   : "border-wine bg-postit-pink/30"
               }`}
             >
               <p className="font-hand-note text-lg text-ink">
-                {feedbackAtivo.acertou ? "Você acertou!" : "Não foi dessa vez."}
+                {feedbackAtivo.acertou ? "Você acertou!" : "Não foi dessa vez."}{" "}
+                <span className="text-base text-ink-soft">{feedbackAtivo.comentario}</span>
               </p>
               <p className="mt-1 text-sm font-medium text-ink">
                 Resposta correta: {feedbackAtivo.respostaCorreta}

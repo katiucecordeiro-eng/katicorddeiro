@@ -106,6 +106,21 @@ h4 {
   );
 }
 
+/* Entrada suave para feedback de flashcards e telas de resultado */
+@keyframes feedback-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.feedback-pop {
+  animation: feedback-pop 0.25s ease-out;
+}
+
 /* Papel pautado: linhas horizontais para espaços de anotação */
 .ruled-lines {
   background-image: repeating-linear-gradient(
