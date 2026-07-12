@@ -88,7 +88,7 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
   }
 
   function responderAtivo(resposta: string) {
-    if (!cartao || pendente || feedbackAtivo || !resposta.trim()) return;
+    if (!cartao || pendente || selecionada || feedbackAtivo || !resposta.trim()) return;
     setSelecionada(resposta);
     iniciarTransicao(async () => {
       const resultado = await responderFlashcardAtivo(cartao.id, cartao.caixaAtual, resposta);
@@ -139,13 +139,13 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
       </p>
 
       {cartao.modoAtivo ? (
-        <div className="notebook-page flex w-full max-w-lg flex-col items-center gap-4 rounded-sm px-8 py-8 text-center">
+        <div className="notebook-page flex w-full max-w-xl flex-col items-center gap-4 rounded-sm px-5 py-6 text-center sm:px-8 sm:py-8">
           <p className="font-hand text-2xl text-ink">{cartao.frente}</p>
 
           {cartao.imagemUrl && (
-            <div className="relative w-full">
+            <div className="relative mx-auto aspect-[3/4] w-full max-w-xs overflow-hidden rounded-sm border border-line bg-paper-dark/20 sm:max-w-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={cartao.imagemUrl} alt="" className="mx-auto max-h-56 w-auto" />
+              <img src={cartao.imagemUrl} alt="" className="h-full w-full object-contain" />
               {cartao.marcadorX !== null && cartao.marcadorY !== null && (
                 <Marcador x={cartao.marcadorX} y={cartao.marcadorY} />
               )}
@@ -158,28 +158,32 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
           )}
 
           {alternativas && alternativas.length > 0 && (
-            <div className="flex w-full flex-col gap-2">
+            <div className="flex w-full flex-col gap-2.5">
               {alternativas.map((alternativa) => {
                 const ehCorreta = feedbackAtivo && alternativa === feedbackAtivo.respostaCorreta;
                 const ehSelecionadaErrada =
                   feedbackAtivo && !feedbackAtivo.acertou && alternativa === selecionada;
+                const aguardando = !feedbackAtivo && alternativa === selecionada;
                 return (
                   <button
                     key={alternativa}
                     type="button"
                     disabled={pendente || Boolean(selecionada)}
                     onClick={() => responderAtivo(alternativa)}
-                    className={`rounded-sm border px-4 py-2.5 text-left text-ink disabled:opacity-100 ${
+                    className={`touch-manipulation rounded-sm border px-4 py-3.5 text-left text-base text-ink transition-colors select-none active:scale-[0.99] disabled:opacity-100 ${
                       ehCorreta
                         ? "border-slate bg-postit-green/40"
                         : ehSelecionadaErrada
                           ? "border-wine bg-postit-pink/40"
-                          : "border-line hover:border-wine disabled:opacity-60"
+                          : aguardando
+                            ? "border-gold bg-gold/10"
+                            : "cursor-pointer border-line hover:border-wine hover:bg-paper-dark/30 disabled:cursor-default disabled:opacity-60"
                     }`}
                   >
                     {alternativa}
                     {ehCorreta && " ✓"}
                     {ehSelecionadaErrada && " ✗"}
+                    {aguardando && " …"}
                   </button>
                 );
               })}
@@ -199,13 +203,13 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
                 value={respostaTexto}
                 onChange={(evento) => setRespostaTexto(evento.target.value)}
                 placeholder="Digite sua resposta…"
-                className="rounded-sm border border-line px-3 py-2 text-ink outline-none focus:border-wine"
+                className="rounded-sm border border-line px-3 py-3 text-base text-ink outline-none focus:border-wine"
                 disabled={pendente}
               />
               <button
                 type="submit"
                 disabled={pendente || !respostaTexto.trim()}
-                className="rounded-sm bg-wine px-4 py-2 font-medium text-paper hover:bg-wine-dark disabled:opacity-50"
+                className="touch-manipulation cursor-pointer rounded-sm bg-wine px-4 py-3 font-medium text-paper select-none hover:bg-wine-dark active:scale-[0.99] disabled:cursor-default disabled:opacity-50"
               >
                 Responder
               </button>
@@ -223,19 +227,24 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
               <p className="font-hand-note text-lg text-ink">
                 {feedbackAtivo.acertou ? "Você acertou!" : "Não foi dessa vez."}
               </p>
-              {!feedbackAtivo.acertou && (
-                <p className="mt-1 text-sm text-ink">
-                  Resposta correta: {feedbackAtivo.respostaCorreta}
-                </p>
+              <p className="mt-1 text-sm font-medium text-ink">
+                Resposta correta: {feedbackAtivo.respostaCorreta}
+              </p>
+              {feedbackAtivo.verso && (
+                <div className="mt-2">
+                  <p className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
+                    Por quê
+                  </p>
+                  <p className="text-sm text-ink-soft">{feedbackAtivo.verso}</p>
+                </div>
               )}
-              <p className="mt-2 text-sm text-ink-soft">{feedbackAtivo.verso}</p>
               {cartao.explicacao && (
                 <p className="mt-2 text-sm text-ink-soft italic">{cartao.explicacao}</p>
               )}
               <button
                 type="button"
                 onClick={avancar}
-                className="mt-4 rounded-sm bg-wine px-5 py-2 font-medium text-paper hover:bg-wine-dark"
+                className="touch-manipulation mt-4 cursor-pointer rounded-sm bg-wine px-5 py-3 font-medium text-paper select-none hover:bg-wine-dark active:scale-[0.99]"
               >
                 Próxima carta →
               </button>
@@ -247,15 +256,15 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
           <button
             type="button"
             onClick={() => setVirado((v) => !v)}
-            className="notebook-page flex min-h-[16rem] w-full max-w-lg flex-col items-center justify-center gap-4 rounded-sm px-8 py-10 text-center transition-transform hover:-translate-y-0.5"
+            className="notebook-page touch-manipulation flex min-h-[16rem] w-full max-w-xl cursor-pointer flex-col items-center justify-center gap-4 rounded-sm px-6 py-8 text-center transition-transform select-none hover:-translate-y-0.5 active:scale-[0.99] sm:px-8 sm:py-10"
           >
             {!virado ? (
               <>
                 <p className="font-hand text-2xl text-ink">{cartao.frente}</p>
                 {cartao.imagemUrl && (
-                  <div className="relative">
+                  <div className="relative mx-auto aspect-[3/4] w-full max-w-xs overflow-hidden rounded-sm border border-line bg-paper-dark/20">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={cartao.imagemUrl} alt="" className="max-h-40 w-auto" />
+                    <img src={cartao.imagemUrl} alt="" className="h-full w-full object-contain" />
                     {cartao.marcadorX !== null && cartao.marcadorY !== null && (
                       <Marcador x={cartao.marcadorX} y={cartao.marcadorY} />
                     )}
@@ -274,7 +283,7 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
                 type="button"
                 disabled={pendente}
                 onClick={() => classificar("errei")}
-                className="rounded-sm bg-wine px-5 py-2.5 font-medium text-paper hover:bg-wine-dark disabled:opacity-50"
+                className="touch-manipulation cursor-pointer rounded-sm bg-wine px-5 py-3 font-medium text-paper select-none hover:bg-wine-dark active:scale-[0.99] disabled:opacity-50"
               >
                 Errei
               </button>
@@ -282,7 +291,7 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
                 type="button"
                 disabled={pendente}
                 onClick={() => classificar("dificil")}
-                className="rounded-sm bg-gold px-5 py-2.5 font-medium text-ink hover:bg-gold-soft disabled:opacity-50"
+                className="touch-manipulation cursor-pointer rounded-sm bg-gold px-5 py-3 font-medium text-ink select-none hover:bg-gold-soft active:scale-[0.99] disabled:opacity-50"
               >
                 Difícil
               </button>
@@ -290,7 +299,7 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
                 type="button"
                 disabled={pendente}
                 onClick={() => classificar("facil")}
-                className="rounded-sm bg-slate px-5 py-2.5 font-medium text-paper hover:bg-slate-dark disabled:opacity-50"
+                className="touch-manipulation cursor-pointer rounded-sm bg-slate px-5 py-3 font-medium text-paper select-none hover:bg-slate-dark active:scale-[0.99] disabled:opacity-50"
               >
                 Fácil
               </button>
