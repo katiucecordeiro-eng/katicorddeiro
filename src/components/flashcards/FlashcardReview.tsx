@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   revisarFlashcard,
   responderFlashcardAtivo,
@@ -14,6 +14,9 @@ export type CartaoDevido = {
   imagemUrl: string | null;
   marcadorX: number | null;
   marcadorY: number | null;
+  marcadorNumero: number | null;
+  tipo: "visual" | "conceitual";
+  explicacao: string | null;
   pranchaTitulo: string;
   caixaAtual: number;
   alternativas: string[] | null;
@@ -21,6 +24,15 @@ export type CartaoDevido = {
 };
 
 type FeedbackAtivo = { acertou: boolean; respostaCorreta: string; verso: string };
+
+function embaralhar<T>(lista: T[]): T[] {
+  const copia = [...lista];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
 
 function Marcador({ x, y }: { x: number; y: number }) {
   return (
@@ -35,6 +47,7 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
   const [indice, setIndice] = useState(0);
   const [virado, setVirado] = useState(false);
   const [respostaTexto, setRespostaTexto] = useState("");
+  const [selecionada, setSelecionada] = useState<string | null>(null);
   const [feedbackAtivo, setFeedbackAtivo] = useState<FeedbackAtivo | null>(null);
   const [xpAcumulado, setXpAcumulado] = useState(0);
   const [acertos, setAcertos] = useState(0);
@@ -46,9 +59,15 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
   const concluido = indice >= cartoes.length;
   const revisados = acertos + erros;
 
+  const alternativas = useMemo(
+    () => (cartao?.alternativas ? embaralhar(cartao.alternativas) : null),
+    [cartao]
+  );
+
   function avancar() {
     setVirado(false);
     setRespostaTexto("");
+    setSelecionada(null);
     setFeedbackAtivo(null);
     setIndice((i) => i + 1);
   }
@@ -70,6 +89,7 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
 
   function responderAtivo(resposta: string) {
     if (!cartao || pendente || feedbackAtivo || !resposta.trim()) return;
+    setSelecionada(resposta);
     iniciarTransicao(async () => {
       const resultado = await responderFlashcardAtivo(cartao.id, cartao.caixaAtual, resposta);
       if (resultado.error || resultado.acertou === undefined) return;
@@ -131,20 +151,38 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
               )}
             </div>
           )}
+          {cartao.marcadorNumero !== null && (
+            <p className="text-xs tracking-wide text-gold uppercase">
+              Marcador nº {cartao.marcadorNumero}
+            </p>
+          )}
 
-          {!feedbackAtivo && cartao.alternativas && cartao.alternativas.length > 0 && (
+          {alternativas && alternativas.length > 0 && (
             <div className="flex w-full flex-col gap-2">
-              {cartao.alternativas.map((alternativa) => (
-                <button
-                  key={alternativa}
-                  type="button"
-                  disabled={pendente}
-                  onClick={() => responderAtivo(alternativa)}
-                  className="rounded-sm border border-line px-4 py-2.5 text-left text-ink hover:border-wine disabled:opacity-70"
-                >
-                  {alternativa}
-                </button>
-              ))}
+              {alternativas.map((alternativa) => {
+                const ehCorreta = feedbackAtivo && alternativa === feedbackAtivo.respostaCorreta;
+                const ehSelecionadaErrada =
+                  feedbackAtivo && !feedbackAtivo.acertou && alternativa === selecionada;
+                return (
+                  <button
+                    key={alternativa}
+                    type="button"
+                    disabled={pendente || Boolean(selecionada)}
+                    onClick={() => responderAtivo(alternativa)}
+                    className={`rounded-sm border px-4 py-2.5 text-left text-ink disabled:opacity-100 ${
+                      ehCorreta
+                        ? "border-slate bg-postit-green/40"
+                        : ehSelecionadaErrada
+                          ? "border-wine bg-postit-pink/40"
+                          : "border-line hover:border-wine disabled:opacity-60"
+                    }`}
+                  >
+                    {alternativa}
+                    {ehCorreta && " ✓"}
+                    {ehSelecionadaErrada && " ✗"}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -191,6 +229,9 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
                 </p>
               )}
               <p className="mt-2 text-sm text-ink-soft">{feedbackAtivo.verso}</p>
+              {cartao.explicacao && (
+                <p className="mt-2 text-sm text-ink-soft italic">{cartao.explicacao}</p>
+              )}
               <button
                 type="button"
                 onClick={avancar}

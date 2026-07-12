@@ -101,37 +101,46 @@ export type Database = {
         Row: {
           alternativas: Json | null;
           criado_em: string;
+          explicacao: string | null;
           frente: string;
           id: string;
           imagem_url: string | null;
+          marcador_numero: number | null;
           marcador_x: number | null;
           marcador_y: number | null;
           prancha_id: string;
           resposta_correta: string | null;
+          tipo: Database["public"]["Enums"]["tipo_flashcard"];
           verso: string;
         };
         Insert: {
           alternativas?: Json | null;
           criado_em?: string;
+          explicacao?: string | null;
           frente: string;
           id?: string;
           imagem_url?: string | null;
+          marcador_numero?: number | null;
           marcador_x?: number | null;
           marcador_y?: number | null;
           prancha_id: string;
           resposta_correta?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_flashcard"];
           verso: string;
         };
         Update: {
           alternativas?: Json | null;
           criado_em?: string;
+          explicacao?: string | null;
           frente?: string;
           id?: string;
           imagem_url?: string | null;
+          marcador_numero?: number | null;
           marcador_x?: number | null;
           marcador_y?: number | null;
           prancha_id?: string;
           resposta_correta?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_flashcard"];
           verso?: string;
         };
         Relationships: [
@@ -429,6 +438,7 @@ export type Database = {
     Enums: {
       dificuldade_quiz: "facil" | "medio" | "dificil";
       plano_usuario: "white" | "black";
+      tipo_flashcard: "visual" | "conceitual";
       tipo_quiz: "multipla_escolha" | "apontar_imagem";
       tipo_sessao_pomodoro: "foco" | "descanso";
     };

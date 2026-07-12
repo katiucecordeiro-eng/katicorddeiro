@@ -45,7 +45,7 @@ export default async function FlashcardsRevisarPage({ searchParams }: PageProps)
   let query = supabase
     .from("flashcards")
     .select(
-      "id, frente, verso, imagem_url, marcador_x, marcador_y, alternativas, resposta_correta, prancha_id, pranchas(titulo, numero_prancha)"
+      "id, frente, verso, imagem_url, marcador_x, marcador_y, marcador_numero, alternativas, resposta_correta, explicacao, tipo, prancha_id, pranchas(titulo, numero_prancha)"
     );
 
   if (pranchaId) {
@@ -74,6 +74,9 @@ export default async function FlashcardsRevisarPage({ searchParams }: PageProps)
       imagemUrl: f.imagem_url,
       marcadorX: f.marcador_x,
       marcadorY: f.marcador_y,
+      marcadorNumero: f.marcador_numero,
+      tipo: f.tipo,
+      explicacao: f.explicacao,
       pranchaTitulo: f.pranchas ? `${f.pranchas.numero_prancha} · ${f.pranchas.titulo}` : "",
       caixaAtual: p?.caixa ?? 1,
       alternativas: (f.alternativas as string[] | null) ?? null,
