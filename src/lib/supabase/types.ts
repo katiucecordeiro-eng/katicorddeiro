@@ -64,6 +64,7 @@ export type Database = {
       };
       flashcard_progresso: {
         Row: {
+          anotacao: string | null;
           atualizado_em: string;
           caixa: number;
           flashcard_id: string;
@@ -72,6 +73,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          anotacao?: string | null;
           atualizado_em?: string;
           caixa?: number;
           flashcard_id: string;
@@ -80,6 +82,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          anotacao?: string | null;
           atualizado_em?: string;
           caixa?: number;
           flashcard_id?: string;
@@ -97,29 +100,86 @@ export type Database = {
           },
         ];
       };
+      flashcard_sessao_reflexoes: {
+        Row: {
+          acertos: number;
+          criado_em: string;
+          duracao_segundos: number | null;
+          erros: number;
+          id: string;
+          total_cartoes: number;
+          user_id: string;
+          texto: string;
+          xp_ganho: number;
+        };
+        Insert: {
+          acertos: number;
+          criado_em?: string;
+          duracao_segundos?: number | null;
+          erros: number;
+          id?: string;
+          total_cartoes: number;
+          user_id: string;
+          texto: string;
+          xp_ganho: number;
+        };
+        Update: {
+          acertos?: number;
+          criado_em?: string;
+          duracao_segundos?: number | null;
+          erros?: number;
+          id?: string;
+          total_cartoes?: number;
+          user_id?: string;
+          texto?: string;
+          xp_ganho?: number;
+        };
+        Relationships: [];
+      };
       flashcards: {
         Row: {
+          alternativas: Json | null;
           criado_em: string;
+          explicacao: string | null;
           frente: string;
           id: string;
           imagem_url: string | null;
+          marcador_numero: number | null;
+          marcador_x: number | null;
+          marcador_y: number | null;
           prancha_id: string;
+          resposta_correta: string | null;
+          tipo: Database["public"]["Enums"]["tipo_flashcard"];
           verso: string;
         };
         Insert: {
+          alternativas?: Json | null;
           criado_em?: string;
+          explicacao?: string | null;
           frente: string;
           id?: string;
           imagem_url?: string | null;
+          marcador_numero?: number | null;
+          marcador_x?: number | null;
+          marcador_y?: number | null;
           prancha_id: string;
+          resposta_correta?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_flashcard"];
           verso: string;
         };
         Update: {
+          alternativas?: Json | null;
           criado_em?: string;
+          explicacao?: string | null;
           frente?: string;
           id?: string;
           imagem_url?: string | null;
+          marcador_numero?: number | null;
+          marcador_x?: number | null;
+          marcador_y?: number | null;
           prancha_id?: string;
+          resposta_correta?: string | null;
+          tipo?: Database["public"]["Enums"]["tipo_flashcard"];
           verso?: string;
         };
         Relationships: [
@@ -417,6 +477,7 @@ export type Database = {
     Enums: {
       dificuldade_quiz: "facil" | "medio" | "dificil";
       plano_usuario: "white" | "black";
+      tipo_flashcard: "visual" | "conceitual";
       tipo_quiz: "multipla_escolha" | "apontar_imagem";
       tipo_sessao_pomodoro: "foco" | "descanso";
     };

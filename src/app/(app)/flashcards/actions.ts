@@ -12,19 +12,17 @@ const XP_POR_CLASSIFICACAO: Record<Classificacao, number> = {
   facil: 5,
 };
 
-export type RevisarFlashcardResult = { error: string | null; xpGanho?: number };
+function normalizarResposta(texto: string): string {
+  return texto.trim().toLowerCase();
+}
 
-export async function revisarFlashcard(
-  flashcard_id: string,
+async function aplicarRevisao(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  flashcardId: string,
   caixaAtual: number,
   classificacao: Classificacao
-): Promise<RevisarFlashcardResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Sessão expirada." };
-
+): Promise<{ error: string | null; xpGanho?: number }> {
   let novaCaixa: number;
   if (classificacao === "errei") {
     novaCaixa = 1;
@@ -40,8 +38,8 @@ export async function revisarFlashcard(
 
   const { error } = await supabase.from("flashcard_progresso").upsert(
     {
-      user_id: user.id,
-      flashcard_id,
+      user_id: userId,
+      flashcard_id: flashcardId,
       caixa: novaCaixa,
       proxima_revisao: proximaRevisao.toISOString().slice(0, 10),
     },
@@ -54,12 +52,12 @@ export async function revisarFlashcard(
     const { data: perfil } = await supabase
       .from("profiles")
       .select("xp_total")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
     await supabase
       .from("profiles")
       .update({ xp_total: (perfil?.xp_total ?? 0) + xpGanho })
-      .eq("id", user.id);
+      .eq("id", userId);
   }
 
   revalidatePath("/dashboard");
@@ -67,4 +65,113 @@ export async function revisarFlashcard(
   revalidatePath("/ranking");
 
   return { error: null, xpGanho };
+}
+
+export type RevisarFlashcardResult = { error: string | null; xpGanho?: number };
+
+export async function revisarFlashcard(
+  flashcard_id: string,
+  caixaAtual: number,
+  classificacao: Classificacao
+): Promise<RevisarFlashcardResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  return aplicarRevisao(supabase, user.id, flashcard_id, caixaAtual, classificacao);
+}
+
+export type ResponderFlashcardResult = {
+  error: string | null;
+  acertou?: boolean;
+  respostaCorreta?: string;
+  verso?: string;
+  xpGanho?: number;
+};
+
+export async function responderFlashcardAtivo(
+  flashcard_id: string,
+  caixaAtual: number,
+  resposta: string
+): Promise<ResponderFlashcardResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { data: flashcard } = await supabase
+    .from("flashcards")
+    .select("resposta_correta, verso")
+    .eq("id", flashcard_id)
+    .single();
+
+  if (!flashcard?.resposta_correta) {
+    return { error: "Este flashcard não tem correção automática." };
+  }
+
+  const acertou = normalizarResposta(resposta) === normalizarResposta(flashcard.resposta_correta);
+  const classificacao: Classificacao = acertou ? "facil" : "errei";
+
+  const resultado = await aplicarRevisao(supabase, user.id, flashcard_id, caixaAtual, classificacao);
+  if (resultado.error) return { error: resultado.error };
+
+  return {
+    error: null,
+    acertou,
+    respostaCorreta: flashcard.resposta_correta,
+    verso: flashcard.verso,
+    xpGanho: resultado.xpGanho,
+  };
+}
+
+export async function salvarAnotacaoFlashcard(
+  flashcard_id: string,
+  anotacao: string
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { error } = await supabase
+    .from("flashcard_progresso")
+    .update({ anotacao })
+    .eq("user_id", user.id)
+    .eq("flashcard_id", flashcard_id);
+
+  if (error) return { error: "Não foi possível salvar a anotação." };
+  return { error: null };
+}
+
+export async function salvarReflexaoSessao(dados: {
+  totalCartoes: number;
+  acertos: number;
+  erros: number;
+  xpGanho: number;
+  duracaoSegundos: number;
+  texto: string;
+}): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+  if (!dados.texto.trim()) return { error: "Escreva algo antes de salvar." };
+
+  const { error } = await supabase.from("flashcard_sessao_reflexoes").insert({
+    user_id: user.id,
+    total_cartoes: dados.totalCartoes,
+    acertos: dados.acertos,
+    erros: dados.erros,
+    xp_ganho: dados.xpGanho,
+    duracao_segundos: dados.duracaoSegundos,
+    texto: dados.texto.trim(),
+  });
+
+  if (error) return { error: "Não foi possível salvar sua reflexão." };
+  return { error: null };
 }

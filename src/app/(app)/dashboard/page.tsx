@@ -71,7 +71,7 @@ export default async function DashboardPage() {
 
       {flashcardsDevidos > 0 && (
         <Link
-          href="/flashcards"
+          href="/flashcards/revisar?modo=devidos"
           className="border-ornamental flex items-center justify-between rounded-sm bg-postit-yellow/40 p-5 transition-colors hover:bg-postit-yellow/60"
         >
           <div>
