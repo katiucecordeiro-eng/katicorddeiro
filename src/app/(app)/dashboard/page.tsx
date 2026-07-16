@@ -93,7 +93,7 @@ export default async function DashboardPage() {
         >
           <h2 className="font-serif text-xl font-semibold text-ink">Biblioteca de Pranchas</h2>
           <p className="mt-1 text-sm text-ink-soft">
-            Explore os sistemas anatômicos e continue colorindo suas pranchas.
+            Explore os sistemas anatômicos e estude o conteúdo das suas pranchas.
           </p>
         </Link>
         <Link

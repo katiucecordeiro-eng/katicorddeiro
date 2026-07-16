@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { HandDivider } from "@/components/notebook/HandDivider";
+import { PontoClinico } from "@/components/notebook/PontoClinico";
+import { normalizarConteudoSistema } from "@/components/notebook/theory-types";
 
 export const metadata: Metadata = { title: "Biblioteca de Pranchas — Asterik" };
 
@@ -10,7 +12,9 @@ export default async function BibliotecaPage() {
 
   const { data: sistemas } = await supabase
     .from("sistemas")
-    .select("id, nome, ordem, pranchas(id, numero_prancha, titulo, disponivel_no_white)")
+    .select(
+      "id, nome, ordem, conteudo_teorico, pranchas(id, numero_prancha, titulo, disponivel_no_white)"
+    )
     .order("ordem");
 
   const {
@@ -40,7 +44,9 @@ export default async function BibliotecaPage() {
       )}
 
       <div className="flex flex-col gap-8">
-        {sistemas?.map((sistema) => (
+        {sistemas?.map((sistema) => {
+          const { fechamento } = normalizarConteudoSistema(sistema.conteudo_teorico);
+          return (
           <section key={sistema.id}>
             <h2 className="font-hand text-3xl font-semibold text-wine">
               {sistema.nome}
@@ -82,8 +88,25 @@ export default async function BibliotecaPage() {
                 <p className="text-sm text-ink-soft">Nenhuma prancha cadastrada.</p>
               )}
             </div>
+
+            {fechamento && (
+              <div className="notebook-page mt-4 rounded-sm px-6 py-6">
+                <p className="font-hand-note mb-3 text-lg text-wine">
+                  Fechando o {sistema.nome}
+                </p>
+                <p className="font-serif text-ink">{fechamento.texto}</p>
+                {fechamento.pontos_clinicos.length > 0 && (
+                  <div className="mt-4 flex flex-col gap-3">
+                    {fechamento.pontos_clinicos.map((texto, indice) => (
+                      <PontoClinico key={indice} texto={texto} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </section>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
