@@ -126,3 +126,52 @@ export async function responderFlashcardAtivo(
     xpGanho: resultado.xpGanho,
   };
 }
+
+export async function salvarAnotacaoFlashcard(
+  flashcard_id: string,
+  anotacao: string
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { error } = await supabase
+    .from("flashcard_progresso")
+    .update({ anotacao })
+    .eq("user_id", user.id)
+    .eq("flashcard_id", flashcard_id);
+
+  if (error) return { error: "Não foi possível salvar a anotação." };
+  return { error: null };
+}
+
+export async function salvarReflexaoSessao(dados: {
+  totalCartoes: number;
+  acertos: number;
+  erros: number;
+  xpGanho: number;
+  duracaoSegundos: number;
+  texto: string;
+}): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+  if (!dados.texto.trim()) return { error: "Escreva algo antes de salvar." };
+
+  const { error } = await supabase.from("flashcard_sessao_reflexoes").insert({
+    user_id: user.id,
+    total_cartoes: dados.totalCartoes,
+    acertos: dados.acertos,
+    erros: dados.erros,
+    xp_ganho: dados.xpGanho,
+    duracao_segundos: dados.duracaoSegundos,
+    texto: dados.texto.trim(),
+  });
+
+  if (error) return { error: "Não foi possível salvar sua reflexão." };
+  return { error: null };
+}

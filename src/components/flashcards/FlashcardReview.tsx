@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   revisarFlashcard,
   responderFlashcardAtivo,
+  salvarAnotacaoFlashcard,
+  salvarReflexaoSessao,
   type Classificacao,
 } from "@/app/(app)/flashcards/actions";
 
@@ -38,10 +40,32 @@ function frasePara(acertou: boolean): string {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
-function embaralhar<T>(lista: T[]): T[] {
+function agora(): number {
+  return Date.now();
+}
+
+function hashString(texto: string): number {
+  let h = 0;
+  for (let i = 0; i < texto.length; i++) {
+    h = (h * 31 + texto.charCodeAt(i)) | 0;
+  }
+  return h;
+}
+
+// Embaralha de forma determinística (semente = id do cartão), não com
+// Math.random(): assim o servidor e o cliente calculam sempre a mesma
+// ordem no primeiro render, sem erro de hidratação.
+function embaralharComSemente<T>(lista: T[], semente: string): T[] {
+  let estado = hashString(semente) || 1;
+  function proximo() {
+    estado ^= estado << 13;
+    estado ^= estado >>> 17;
+    estado ^= estado << 5;
+    return (estado >>> 0) / 4294967296;
+  }
   const copia = [...lista];
   for (let i = copia.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(proximo() * (i + 1));
     [copia[i], copia[j]] = [copia[j], copia[i]];
   }
   return copia;
@@ -56,145 +80,105 @@ function Marcador({ x, y }: { x: number; y: number }) {
   );
 }
 
-export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
-  const [indice, setIndice] = useState(0);
+type ResultadoResposta = { acertou: boolean; xpGanho: number; frente: string };
+
+type CartaoAtivoProps = {
+  cartao: CartaoDevido;
+  numero: number;
+  total: number;
+  acertos: number;
+  erros: number;
+  xp: number;
+  onResultado: (resultado: ResultadoResposta) => void;
+  onAvancar: () => void;
+};
+
+// Um cartão inteiro, com todo o seu estado local (resposta selecionada,
+// feedback, anotação). Montado com `key={cartao.id}` pelo componente pai —
+// isso garante que, ao trocar de cartão, o React descarta esta instância
+// e monta uma nova do zero, sem qualquer chance de estado "vazar" de um
+// cartão para o outro.
+function CartaoAtivo({
+  cartao,
+  numero,
+  total,
+  acertos,
+  erros,
+  xp,
+  onResultado,
+  onAvancar,
+}: CartaoAtivoProps) {
   const [virado, setVirado] = useState(false);
   const [respostaTexto, setRespostaTexto] = useState("");
   const [selecionada, setSelecionada] = useState<string | null>(null);
   const [feedbackAtivo, setFeedbackAtivo] = useState<FeedbackAtivo | null>(null);
-  const [xpAcumulado, setXpAcumulado] = useState(0);
-  const [acertos, setAcertos] = useState(0);
-  const [erros, setErros] = useState(0);
-  const [estruturasErradas, setEstruturasErradas] = useState<string[]>([]);
+  const [anotacao, setAnotacao] = useState("");
+  const [anotacaoSalva, setAnotacaoSalva] = useState(false);
   const [pendente, iniciarTransicao] = useTransition();
-
-  const cartao = cartoes[indice];
-  const concluido = indice >= cartoes.length;
-  const revisados = acertos + erros;
-
-  const alternativas = useMemo(
-    () => (cartao?.alternativas ? embaralhar(cartao.alternativas) : null),
-    [cartao]
-  );
-
-  // Rastreia o id do cartão atualmente exibido, para descartar respostas
-  // do servidor que cheguem atrasadas depois que o usuário já avançou.
-  const cartaoIdRef = useRef<string | undefined>(cartao?.id);
-  useEffect(() => {
-    cartaoIdRef.current = cartao?.id;
-  }, [cartao?.id]);
-
-  // Trava síncrona (fora do ciclo de render) contra duplo toque/duplo clique.
   const respondendoRef = useRef(false);
 
-  function avancar() {
-    setVirado(false);
-    setRespostaTexto("");
-    setSelecionada(null);
-    setFeedbackAtivo(null);
-    setIndice((i) => i + 1);
-  }
+  const [alternativas] = useState(() =>
+    cartao.alternativas ? embaralharComSemente(cartao.alternativas, cartao.id) : null
+  );
+
+  const revisados = acertos + erros;
 
   function classificar(classificacao: Classificacao) {
-    if (!cartao || pendente || respondendoRef.current) return;
+    if (respondendoRef.current) return;
     respondendoRef.current = true;
-    const frenteRespondida = cartao.frente;
     iniciarTransicao(async () => {
       const resultado = await revisarFlashcard(cartao.id, cartao.caixaAtual, classificacao);
       respondendoRef.current = false;
-      setXpAcumulado((xp) => xp + (resultado.xpGanho ?? 0));
-      if (classificacao === "errei") {
-        setErros((e) => e + 1);
-        setEstruturasErradas((atual) => [...atual, frenteRespondida]);
-      } else {
-        setAcertos((a) => a + 1);
-      }
-      avancar();
+      onResultado({
+        acertou: classificacao !== "errei",
+        xpGanho: resultado.xpGanho ?? 0,
+        frente: cartao.frente,
+      });
+      onAvancar();
     });
   }
 
   function responderAtivo(resposta: string) {
-    if (!cartao || pendente || respondendoRef.current || selecionada || feedbackAtivo || !resposta.trim())
-      return;
+    if (respondendoRef.current || selecionada || feedbackAtivo || !resposta.trim()) return;
     respondendoRef.current = true;
-    const idRespondido = cartao.id;
-    const frenteRespondida = cartao.frente;
-    const versoRespondido = cartao.verso;
     setSelecionada(resposta);
     iniciarTransicao(async () => {
       const resultado = await responderFlashcardAtivo(cartao.id, cartao.caixaAtual, resposta);
       respondendoRef.current = false;
       if (resultado.error || resultado.acertou === undefined) return;
 
-      setXpAcumulado((xp) => xp + (resultado.xpGanho ?? 0));
-      if (resultado.acertou) {
-        setAcertos((a) => a + 1);
-      } else {
-        setErros((e) => e + 1);
-        setEstruturasErradas((atual) => [...atual, frenteRespondida]);
-      }
-
-      // Se o usuário já avançou de cartão enquanto esperava a resposta,
-      // não mostra o feedback — ele não corresponde mais ao que está na tela.
-      if (cartaoIdRef.current !== idRespondido) return;
-
+      onResultado({
+        acertou: resultado.acertou,
+        xpGanho: resultado.xpGanho ?? 0,
+        frente: cartao.frente,
+      });
       setFeedbackAtivo({
         acertou: resultado.acertou,
         respostaCorreta: resultado.respostaCorreta ?? "",
-        verso: resultado.verso ?? versoRespondido,
+        verso: resultado.verso ?? cartao.verso,
         comentario: frasePara(resultado.acertou),
       });
     });
   }
 
-  if (concluido) {
-    const percentual = revisados > 0 ? Math.round((acertos / revisados) * 100) : 0;
-    const comentarioFinal =
-      revisados === 0
-        ? ""
-        : percentual >= 90
-          ? "Desempenho excelente — você domina essa prancha!"
-          : percentual >= 70
-            ? "Muito bom! Só falta afinar alguns detalhes."
-            : percentual >= 50
-              ? "Bom começo — revise os pontos abaixo e tente de novo."
-              : "Vale revisar com calma a teoria antes da próxima rodada.";
-    return (
-      <div className="feedback-pop border-ornamental rounded-sm bg-paper-dark/40 p-8 text-center">
-        <p className="font-hand text-3xl text-wine">Revisão concluída!</p>
-        <p className="mt-2 text-ink-soft">
-          Você revisou {revisados} {revisados === 1 ? "cartão" : "cartões"} — {acertos} acertos,{" "}
-          {erros} {erros === 1 ? "erro" : "erros"} ({percentual}%) — e ganhou {xpAcumulado} XP.
-        </p>
-        {comentarioFinal && (
-          <p className="font-hand-note mt-2 text-lg text-wine">{comentarioFinal}</p>
-        )}
-        {estruturasErradas.length > 0 && (
-          <div className="mx-auto mt-4 max-w-sm text-left">
-            <p className="font-hand-note mb-1 text-ink-soft">
-              Estruturas para revisar com mais atenção:
-            </p>
-            <ul className="list-disc pl-5 text-sm text-ink">
-              {estruturasErradas.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
+  function salvarAnotacao() {
+    if (!anotacao.trim() || pendente) return;
+    iniciarTransicao(async () => {
+      await salvarAnotacaoFlashcard(cartao.id, anotacao.trim());
+      setAnotacaoSalva(true);
+    });
   }
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="feedback-pop flex w-full flex-col items-center gap-6">
       <div className="flex flex-col items-center gap-1">
         <p className="font-hand-note text-sm text-ink-soft">
-          Cartão {indice + 1} de {cartoes.length} — {cartao.pranchaTitulo}
+          Cartão {numero} de {total} — {cartao.pranchaTitulo}
         </p>
         {revisados > 0 && (
           <p className="text-xs text-ink-soft">
             <span className="text-slate">✓ {acertos}</span> ·{" "}
-            <span className="text-wine">✗ {erros}</span> · {xpAcumulado} XP
+            <span className="text-wine">✗ {erros}</span> · {xp} XP
           </p>
         )}
       </div>
@@ -303,9 +287,36 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
               {cartao.explicacao && (
                 <p className="mt-2 text-sm text-ink-soft italic">{cartao.explicacao}</p>
               )}
+
+              <div className="mt-3 border-t border-line/60 pt-3">
+                <label className="font-hand-note mb-1 block text-sm text-ink-soft">
+                  Anotação sobre este cartão (opcional)
+                </label>
+                <textarea
+                  value={anotacao}
+                  onChange={(evento) => {
+                    setAnotacao(evento.target.value);
+                    setAnotacaoSalva(false);
+                  }}
+                  rows={2}
+                  placeholder="Escreva algo que queira lembrar sobre essa estrutura…"
+                  className="w-full rounded-sm border border-line px-3 py-2 text-sm text-ink outline-none focus:border-wine"
+                />
+                {anotacao.trim() && (
+                  <button
+                    type="button"
+                    onClick={salvarAnotacao}
+                    disabled={pendente || anotacaoSalva}
+                    className="touch-manipulation mt-1 cursor-pointer rounded-sm border border-line px-3 py-1.5 text-xs font-medium text-ink-soft select-none hover:border-wine hover:text-wine disabled:cursor-default disabled:opacity-60"
+                  >
+                    {anotacaoSalva ? "Anotação salva ✓" : pendente ? "Salvando…" : "Salvar anotação"}
+                  </button>
+                )}
+              </div>
+
               <button
                 type="button"
-                onClick={avancar}
+                onClick={onAvancar}
                 className="touch-manipulation mt-4 cursor-pointer rounded-sm bg-wine px-5 py-3 font-medium text-paper select-none hover:bg-wine-dark active:scale-[0.99]"
               >
                 Próxima carta →
@@ -370,5 +381,182 @@ export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
         </>
       )}
     </div>
+  );
+}
+
+type ResumoSessaoProps = {
+  totalCartoes: number;
+  acertos: number;
+  erros: number;
+  xpAcumulado: number;
+  estruturasErradas: string[];
+  tempoDecorridoSeg: number | null;
+};
+
+function ResumoSessao({
+  totalCartoes,
+  acertos,
+  erros,
+  xpAcumulado,
+  estruturasErradas,
+  tempoDecorridoSeg,
+}: ResumoSessaoProps) {
+  const [reflexao, setReflexao] = useState("");
+  const [reflexaoSalva, setReflexaoSalva] = useState(false);
+  const [pendente, iniciarTransicao] = useTransition();
+
+  const revisados = acertos + erros;
+  const percentual = revisados > 0 ? Math.round((acertos / revisados) * 100) : 0;
+  const comentarioFinal =
+    revisados === 0
+      ? ""
+      : percentual >= 90
+        ? "Desempenho excelente — você domina essa prancha!"
+        : percentual >= 70
+          ? "Muito bom! Só falta afinar alguns detalhes."
+          : percentual >= 50
+            ? "Bom começo — revise os pontos abaixo e tente de novo."
+            : "Vale revisar com calma a teoria antes da próxima rodada.";
+
+  const contagemErros = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const item of estruturasErradas) mapa.set(item, (mapa.get(item) ?? 0) + 1);
+    return [...mapa.entries()].sort((a, b) => b[1] - a[1]);
+  }, [estruturasErradas]);
+
+  const minutos = tempoDecorridoSeg !== null ? Math.floor(tempoDecorridoSeg / 60) : null;
+  const segundosResto = tempoDecorridoSeg !== null ? tempoDecorridoSeg % 60 : null;
+
+  function salvarReflexao() {
+    if (!reflexao.trim() || pendente) return;
+    iniciarTransicao(async () => {
+      await salvarReflexaoSessao({
+        totalCartoes,
+        acertos,
+        erros,
+        xpGanho: xpAcumulado,
+        duracaoSegundos: tempoDecorridoSeg ?? 0,
+        texto: reflexao,
+      });
+      setReflexaoSalva(true);
+    });
+  }
+
+  return (
+    <div className="feedback-pop border-ornamental mx-auto max-w-xl rounded-sm bg-paper-dark/40 p-8 text-center">
+      <p className="font-hand text-3xl text-wine">Revisão concluída!</p>
+      <p className="mt-2 text-ink-soft">
+        Você revisou {revisados} {revisados === 1 ? "cartão" : "cartões"} — {acertos} acertos,{" "}
+        {erros} {erros === 1 ? "erro" : "erros"} ({percentual}%) — e ganhou {xpAcumulado} XP.
+        {minutos !== null && (
+          <>
+            {" "}
+            Tempo: {minutos}min {segundosResto}s.
+          </>
+        )}
+      </p>
+      {comentarioFinal && <p className="font-hand-note mt-2 text-lg text-wine">{comentarioFinal}</p>}
+
+      {contagemErros.length > 0 && (
+        <div className="mx-auto mt-4 max-w-sm text-left">
+          <p className="font-hand-note mb-1 text-ink-soft">
+            Estruturas para revisar com mais atenção:
+          </p>
+          <ul className="list-disc pl-5 text-sm text-ink">
+            {contagemErros.map(([item, n]) => (
+              <li key={item}>
+                {item}
+                {n > 1 && ` (×${n})`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mx-auto mt-6 max-w-sm text-left">
+        <label className="font-hand-note mb-1 block text-ink-soft">
+          Como foi essa sessão para você?
+        </label>
+        <textarea
+          value={reflexao}
+          onChange={(evento) => {
+            setReflexao(evento.target.value);
+            setReflexaoSalva(false);
+          }}
+          disabled={reflexaoSalva}
+          rows={3}
+          placeholder="Escreva um comentário sobre essa revisão…"
+          className="w-full rounded-sm border border-line px-3 py-2 text-ink outline-none focus:border-wine disabled:opacity-60"
+        />
+        {!reflexaoSalva ? (
+          <button
+            type="button"
+            onClick={salvarReflexao}
+            disabled={pendente || !reflexao.trim()}
+            className="touch-manipulation mt-2 cursor-pointer rounded-sm bg-wine px-4 py-2.5 font-medium text-paper select-none hover:bg-wine-dark active:scale-[0.99] disabled:cursor-default disabled:opacity-50"
+          >
+            {pendente ? "Salvando…" : "Salvar reflexão"}
+          </button>
+        ) : (
+          <p className="mt-2 text-sm text-slate">Reflexão salva.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
+  const [indice, setIndice] = useState(0);
+  const [xpAcumulado, setXpAcumulado] = useState(0);
+  const [acertos, setAcertos] = useState(0);
+  const [erros, setErros] = useState(0);
+  const [estruturasErradas, setEstruturasErradas] = useState<string[]>([]);
+  const [tempoInicio] = useState(agora);
+  const [tempoDecorridoSeg, setTempoDecorridoSeg] = useState<number | null>(null);
+  const [concluidoAnterior, setConcluidoAnterior] = useState(false);
+
+  const concluido = indice >= cartoes.length;
+  const cartao = cartoes[indice];
+
+  if (concluido && !concluidoAnterior) {
+    setConcluidoAnterior(true);
+    setTempoDecorridoSeg(Math.round((agora() - tempoInicio) / 1000));
+  }
+
+  function registrarResultado({ acertou, xpGanho, frente }: ResultadoResposta) {
+    setXpAcumulado((xp) => xp + xpGanho);
+    if (acertou) {
+      setAcertos((a) => a + 1);
+    } else {
+      setErros((e) => e + 1);
+      setEstruturasErradas((atual) => [...atual, frente]);
+    }
+  }
+
+  if (concluido) {
+    return (
+      <ResumoSessao
+        totalCartoes={cartoes.length}
+        acertos={acertos}
+        erros={erros}
+        xpAcumulado={xpAcumulado}
+        estruturasErradas={estruturasErradas}
+        tempoDecorridoSeg={tempoDecorridoSeg}
+      />
+    );
+  }
+
+  return (
+    <CartaoAtivo
+      key={cartao.id}
+      cartao={cartao}
+      numero={indice + 1}
+      total={cartoes.length}
+      acertos={acertos}
+      erros={erros}
+      xp={xpAcumulado}
+      onResultado={registrarResultado}
+      onAvancar={() => setIndice((i) => i + 1)}
+    />
   );
 }

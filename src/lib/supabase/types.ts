@@ -64,6 +64,7 @@ export type Database = {
       };
       flashcard_progresso: {
         Row: {
+          anotacao: string | null;
           atualizado_em: string;
           caixa: number;
           flashcard_id: string;
@@ -72,6 +73,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          anotacao?: string | null;
           atualizado_em?: string;
           caixa?: number;
           flashcard_id: string;
@@ -80,6 +82,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          anotacao?: string | null;
           atualizado_em?: string;
           caixa?: number;
           flashcard_id?: string;
@@ -96,6 +99,42 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      flashcard_sessao_reflexoes: {
+        Row: {
+          acertos: number;
+          criado_em: string;
+          duracao_segundos: number | null;
+          erros: number;
+          id: string;
+          total_cartoes: number;
+          user_id: string;
+          texto: string;
+          xp_ganho: number;
+        };
+        Insert: {
+          acertos: number;
+          criado_em?: string;
+          duracao_segundos?: number | null;
+          erros: number;
+          id?: string;
+          total_cartoes: number;
+          user_id: string;
+          texto: string;
+          xp_ganho: number;
+        };
+        Update: {
+          acertos?: number;
+          criado_em?: string;
+          duracao_segundos?: number | null;
+          erros?: number;
+          id?: string;
+          total_cartoes?: number;
+          user_id?: string;
+          texto?: string;
+          xp_ganho?: number;
+        };
+        Relationships: [];
       };
       flashcards: {
         Row: {
