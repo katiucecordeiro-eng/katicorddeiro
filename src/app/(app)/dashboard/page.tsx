@@ -22,6 +22,21 @@ export default async function DashboardPage() {
     .eq("user_id", user!.id)
     .eq("completo", true);
 
+  const { data: flashcards } = await supabase.from("flashcards").select("id");
+  const { data: progressoFlashcards } = await supabase
+    .from("flashcard_progresso")
+    .select("flashcard_id, proxima_revisao")
+    .eq("user_id", user!.id);
+
+  const progressoPorCartao = new Map(
+    (progressoFlashcards ?? []).map((p) => [p.flashcard_id, p.proxima_revisao])
+  );
+  const hoje = new Date().toISOString().slice(0, 10);
+  const flashcardsDevidos = (flashcards ?? []).filter((f) => {
+    const proximaRevisao = progressoPorCartao.get(f.id);
+    return !proximaRevisao || proximaRevisao <= hoje;
+  }).length;
+
   const planoLabel = profile?.plano === "black" ? "Black" : "White";
 
   return (
@@ -54,6 +69,23 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {flashcardsDevidos > 0 && (
+        <Link
+          href="/flashcards/revisar?modo=devidos"
+          className="border-ornamental flex items-center justify-between rounded-sm bg-postit-yellow/40 p-5 transition-colors hover:bg-postit-yellow/60"
+        >
+          <div>
+            <h2 className="font-hand text-2xl font-semibold text-ink">Revisar hoje</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              Você tem {flashcardsDevidos}{" "}
+              {flashcardsDevidos === 1 ? "flashcard pendente" : "flashcards pendentes"} de
+              revisão.
+            </p>
+          </div>
+          <span className="font-hand-note text-3xl text-wine">→</span>
+        </Link>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link
           href="/pranchas"
@@ -61,7 +93,25 @@ export default async function DashboardPage() {
         >
           <h2 className="font-serif text-xl font-semibold text-ink">Biblioteca de Pranchas</h2>
           <p className="mt-1 text-sm text-ink-soft">
-            Explore os sistemas anatômicos e continue colorindo suas pranchas.
+            Explore os sistemas anatômicos e estude o conteúdo das suas pranchas.
+          </p>
+        </Link>
+        <Link
+          href="/quiz"
+          className="rounded-sm border border-line bg-paper-dark/20 p-5 transition-colors hover:border-wine"
+        >
+          <h2 className="font-serif text-xl font-semibold text-ink">Quiz</h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            Teste seus conhecimentos e ganhe XP para subir no ranking.
+          </p>
+        </Link>
+        <Link
+          href="/ranking"
+          className="rounded-sm border border-line bg-paper-dark/20 p-5 transition-colors hover:border-wine"
+        >
+          <h2 className="font-serif text-xl font-semibold text-ink">Ranking</h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            Veja sua posição entre os estudantes mais dedicados.
           </p>
         </Link>
         <Link
