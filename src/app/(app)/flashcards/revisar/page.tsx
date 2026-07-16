@@ -95,9 +95,15 @@ export default async function FlashcardsRevisarPage({ searchParams }: PageProps)
 
   cartoes = embaralhar(cartoes);
 
+  const paramsRepetir = new URLSearchParams();
+  if (pranchaId) paramsRepetir.set("prancha_id", pranchaId);
+  else if (sistemaId) paramsRepetir.set("sistema_id", sistemaId);
+  if (modo) paramsRepetir.set("modo", modo);
+  const linkRepetir = `/flashcards/revisar?${paramsRepetir.toString()}`;
+
   return (
     <div className="mx-auto max-w-3xl">
-      <FlashcardReview cartoes={cartoes} />
+      <FlashcardReview cartoes={cartoes} linkRepetir={linkRepetir} />
     </div>
   );
 }

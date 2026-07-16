@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
   revisarFlashcard,
@@ -391,6 +392,7 @@ type ResumoSessaoProps = {
   xpAcumulado: number;
   estruturasErradas: string[];
   tempoDecorridoSeg: number | null;
+  linkRepetir: string;
 };
 
 function ResumoSessao({
@@ -400,6 +402,7 @@ function ResumoSessao({
   xpAcumulado,
   estruturasErradas,
   tempoDecorridoSeg,
+  linkRepetir,
 }: ResumoSessaoProps) {
   const [reflexao, setReflexao] = useState("");
   const [reflexaoSalva, setReflexaoSalva] = useState(false);
@@ -501,11 +504,38 @@ function ResumoSessao({
           <p className="mt-2 text-sm text-slate">Reflexão salva.</p>
         )}
       </div>
+
+      <div className="mt-6 flex flex-wrap justify-center gap-3 border-t border-line/60 pt-6">
+        <Link
+          href="/dashboard"
+          className="touch-manipulation rounded-sm border border-line px-4 py-2.5 text-sm font-medium text-ink-soft select-none hover:border-wine hover:text-wine"
+        >
+          Início
+        </Link>
+        <Link
+          href="/flashcards"
+          className="touch-manipulation rounded-sm border border-line px-4 py-2.5 text-sm font-medium text-ink-soft select-none hover:border-wine hover:text-wine"
+        >
+          Escolher outra prancha
+        </Link>
+        <Link
+          href={linkRepetir}
+          className="touch-manipulation rounded-sm bg-wine px-4 py-2.5 text-sm font-medium text-paper select-none hover:bg-wine-dark"
+        >
+          Repetir esta sessão
+        </Link>
+      </div>
     </div>
   );
 }
 
-export function FlashcardReview({ cartoes: cartoesIniciais }: { cartoes: CartaoDevido[] }) {
+export function FlashcardReview({
+  cartoes: cartoesIniciais,
+  linkRepetir,
+}: {
+  cartoes: CartaoDevido[];
+  linkRepetir: string;
+}) {
   // Congela a lista de cartões no momento em que a sessão começa. Cada
   // resposta chama uma Server Action que faz o Next.js re-executar o
   // Server Component da página (para refletir XP/progresso), o que
@@ -550,6 +580,7 @@ export function FlashcardReview({ cartoes: cartoesIniciais }: { cartoes: CartaoD
         xpAcumulado={xpAcumulado}
         estruturasErradas={estruturasErradas}
         tempoDecorridoSeg={tempoDecorridoSeg}
+        linkRepetir={linkRepetir}
       />
     );
   }
