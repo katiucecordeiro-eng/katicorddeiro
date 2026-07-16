@@ -505,7 +505,15 @@ function ResumoSessao({
   );
 }
 
-export function FlashcardReview({ cartoes }: { cartoes: CartaoDevido[] }) {
+export function FlashcardReview({ cartoes: cartoesIniciais }: { cartoes: CartaoDevido[] }) {
+  // Congela a lista de cartões no momento em que a sessão começa. Cada
+  // resposta chama uma Server Action que faz o Next.js re-executar o
+  // Server Component da página (para refletir XP/progresso), o que
+  // buscaria e embaralharia os flashcards de novo — trocando o cartão
+  // por trás do índice atual no meio da sessão. Ignorar mudanças
+  // posteriores na prop evita isso: a sessão sempre usa o mesmo baralho
+  // do início ao fim.
+  const [cartoes] = useState(cartoesIniciais);
   const [indice, setIndice] = useState(0);
   const [xpAcumulado, setXpAcumulado] = useState(0);
   const [acertos, setAcertos] = useState(0);
