@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { registrarTempoEstudo } from "@/lib/actions/estudo";
 
 type Tipo = "foco" | "descanso";
 
@@ -32,6 +33,10 @@ export function PomodoroTimer() {
       finalizado_em: new Date().toISOString(),
     });
     iniciadoEmRef.current = null;
+
+    if (tipo === "foco") {
+      await registrarTempoEstudo("pomodoro", DURACOES.foco);
+    }
   }, [tipo]);
 
   useEffect(() => {

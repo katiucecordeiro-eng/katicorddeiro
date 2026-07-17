@@ -1,12 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CapaPage } from "@/components/notebook/pages/CapaPage";
 import { TeoriaPage } from "@/components/notebook/pages/TeoriaPage";
 import { AnotacoesPage } from "@/components/notebook/pages/AnotacoesPage";
 import { PranchasVisualizacao } from "@/components/notebook/pages/PranchasVisualizacao";
 import type { ConteudoPrancha } from "@/components/notebook/theory-types";
+import { registrarTempoEstudo } from "@/lib/actions/estudo";
+
+function agora(): number {
+  return Date.now();
+}
 
 type GaleriaItem = { id: string; imagem_url: string; titulo: string };
 
@@ -28,6 +33,30 @@ export function NotebookViewer(props: NotebookViewerProps) {
   const [indice, setIndice] = useState(0);
   const pagina = PAGINAS[indice];
   const largura = pagina === "pranchas" ? "max-w-6xl" : "max-w-3xl";
+
+  // Soma o tempo com a página "teoria" ativa (a leitura em si) e registra
+  // o total ao sair da tela — não a cada troca de página.
+  const segundosLeituraRef = useRef(0);
+  const teoriaDesdeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (pagina === "teoria") {
+      teoriaDesdeRef.current = agora();
+    } else if (teoriaDesdeRef.current !== null) {
+      segundosLeituraRef.current += (agora() - teoriaDesdeRef.current) / 1000;
+      teoriaDesdeRef.current = null;
+    }
+  }, [pagina]);
+
+  useEffect(() => {
+    return () => {
+      if (teoriaDesdeRef.current !== null) {
+        segundosLeituraRef.current += (agora() - teoriaDesdeRef.current) / 1000;
+      }
+      const minutos = Math.round(segundosLeituraRef.current / 60);
+      if (minutos > 0) registrarTempoEstudo("leitura", minutos);
+    };
+  }, []);
 
   return (
     <div className={`mx-auto flex ${largura} flex-col gap-4`}>
