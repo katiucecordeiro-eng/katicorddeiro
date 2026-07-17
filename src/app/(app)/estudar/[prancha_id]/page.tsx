@@ -50,6 +50,13 @@ export default async function EstudarPage({ params }: PageProps) {
     .eq("prancha_id", prancha_id)
     .maybeSingle();
 
+  // Marca esta prancha como a mais recentemente visitada, para o atalho
+  // "continuar de onde parei" no dashboard.
+  await supabase.from("progresso_usuario").upsert(
+    { user_id: user!.id, prancha_id, atualizado_em: new Date().toISOString() },
+    { onConflict: "user_id,prancha_id" }
+  );
+
   const conteudoSistema = normalizarConteudoSistema(sistema?.conteudo_teorico);
 
   return (

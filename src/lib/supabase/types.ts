@@ -62,6 +62,30 @@ export type Database = {
           },
         ];
       };
+      estrategia_estudo: {
+        Row: {
+          atualizado_em: string;
+          formatos_json: Json;
+          id: string;
+          metas_json: Json;
+          user_id: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          formatos_json?: Json;
+          id?: string;
+          metas_json?: Json;
+          user_id: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          formatos_json?: Json;
+          id?: string;
+          metas_json?: Json;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       flashcard_progresso: {
         Row: {
           anotacao: string | null;
@@ -191,6 +215,33 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      habitos_dia: {
+        Row: {
+          cumprido: boolean;
+          data: string;
+          formatos_usados_json: Json;
+          id: string;
+          minutos_estudados: number;
+          user_id: string;
+        };
+        Insert: {
+          cumprido?: boolean;
+          data?: string;
+          formatos_usados_json?: Json;
+          id?: string;
+          minutos_estudados?: number;
+          user_id: string;
+        };
+        Update: {
+          cumprido?: boolean;
+          data?: string;
+          formatos_usados_json?: Json;
+          id?: string;
+          minutos_estudados?: number;
+          user_id?: string;
+        };
+        Relationships: [];
       };
       prancha_imagens: {
         Row: {
@@ -418,6 +469,30 @@ export type Database = {
           },
         ];
       };
+      sessoes_estudo: {
+        Row: {
+          criado_em: string;
+          id: string;
+          minutos: number;
+          tipo: Database["public"]["Enums"]["formato_estudo"];
+          user_id: string;
+        };
+        Insert: {
+          criado_em?: string;
+          id?: string;
+          minutos: number;
+          tipo: Database["public"]["Enums"]["formato_estudo"];
+          user_id: string;
+        };
+        Update: {
+          criado_em?: string;
+          id?: string;
+          minutos?: number;
+          tipo?: Database["public"]["Enums"]["formato_estudo"];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       sessoes_pomodoro: {
         Row: {
           duracao_minutos: number;
@@ -508,6 +583,7 @@ export type Database = {
     };
     Enums: {
       dificuldade_quiz: "facil" | "medio" | "dificil";
+      formato_estudo: "colorir" | "quiz" | "flashcards" | "leitura" | "pomodoro";
       plano_usuario: "white" | "black";
       tipo_flashcard: "visual" | "conceitual";
       tipo_quiz: "multipla_escolha" | "apontar_imagem";

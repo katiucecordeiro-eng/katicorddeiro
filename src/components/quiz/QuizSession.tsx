@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { registrarResposta, type RespostaEnviada } from "@/app/(app)/quiz/actions";
+import { registrarTempoEstudo } from "@/lib/actions/estudo";
+
+function agora(): number {
+  return Date.now();
+}
 
 export type PerguntaSessao = {
   id: string;
@@ -25,9 +30,17 @@ export function QuizSession({ perguntas }: { perguntas: PerguntaSessao[] }) {
   const [acertos, setAcertos] = useState(0);
   const [xpTotal, setXpTotal] = useState(0);
   const [pendente, iniciarTransicao] = useTransition();
+  const [tempoInicio] = useState(agora);
 
   const pergunta = perguntas[indice];
   const concluido = indice >= perguntas.length;
+
+  useEffect(() => {
+    if (!concluido) return;
+    const minutos = Math.round((agora() - tempoInicio) / 60000);
+    if (minutos > 0) registrarTempoEstudo("quiz", minutos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [concluido]);
 
   function enviarResposta(resposta: RespostaEnviada) {
     if (pendente || feedback) return;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   revisarFlashcard,
   responderFlashcardAtivo,
@@ -9,6 +9,7 @@ import {
   salvarReflexaoSessao,
   type Classificacao,
 } from "@/app/(app)/flashcards/actions";
+import { registrarTempoEstudo } from "@/lib/actions/estudo";
 
 export type CartaoDevido = {
   id: string;
@@ -429,6 +430,11 @@ function ResumoSessao({
 
   const minutos = tempoDecorridoSeg !== null ? Math.floor(tempoDecorridoSeg / 60) : null;
   const segundosResto = tempoDecorridoSeg !== null ? tempoDecorridoSeg % 60 : null;
+
+  useEffect(() => {
+    if (minutos && minutos > 0) registrarTempoEstudo("flashcards", minutos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function salvarReflexao() {
     if (!reflexao.trim() || pendente) return;
